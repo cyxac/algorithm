@@ -19,7 +19,7 @@ class Junction
 end
 
 def estimate_time_out from_junction, to_junction, duct_length
-  all_ducts = { 0 => Junction.new(0)}
+  all_ducts = { 0 => Junction.new(0) }
   from_junction.zip(to_junction, duct_length) { |row|
     if all_ducts.has_key? row[0]
       from = all_ducts[row[0]]
