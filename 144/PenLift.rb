@@ -115,19 +115,11 @@ end
 def build_graph edges
   graph = {}
   edges.each do |l|
-    if graph.has_key?(l.head.to_s)
-      head = graph[l.head.to_s]
-    else
-      head = l.head
-      graph[head.to_s] = head
-    end
+    graph[l.head.to_s] ||= l.head
+    head = graph[l.head.to_s]
 
-    if graph.has_key?(l.tail.to_s)
-      tail = graph[l.tail.to_s]
-    else
-      tail = l.tail
-      graph[l.tail.to_s] = tail
-    end
+    graph[l.tail.to_s] ||= l.tail
+    tail = graph[l.tail.to_s]
 
     head.connected << tail
     tail.connected << head
