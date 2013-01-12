@@ -19,9 +19,9 @@ class VendingMachine
     end
     
     def purchase(row, column, time)
-        self.display_expensive_column if (time - @last_purchase_time) >= 5
+        display_expensive_column if (time - @last_purchase_time) >= 5
         @prices[row][column] = 0
-        self.move column
+        move column
         @last_purchase_time = time
     end
     
