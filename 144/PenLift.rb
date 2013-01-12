@@ -30,8 +30,8 @@ class Line
   end
 
   def merge! other
-    return false if self.horizontal? != other.horizontal?
-    if self.horizontal? && @head.y == other.head.y
+    return false if horizontal? != other.horizontal?
+    if horizontal? && @head.y == other.head.y
       if ([@head.x, @tail.x].min <= [other.head.x, other.tail.x].max &&
           [@head.x, @tail.x].max >= [other.head.x, other.tail.x].min)
           all_x = [@head, @tail, other.head, other.tail].map { |e| e.x  }
@@ -39,7 +39,7 @@ class Line
           @tail.x = all_x.max
           return self
       end
-    elsif !self.horizontal? && @head.x == other.head.x
+    elsif !horizontal? && @head.x == other.head.x
       if ([@head.y, @tail.y].min <= [other.head.y, other.tail.y].max &&
           [@head.y, @tail.y].max >= [other.head.y, other.tail.y].min)
           all_y = [@head, @tail, other.head, other.tail].map { |e| e.y  }
@@ -53,8 +53,8 @@ class Line
   end
 
   def intersect other
-    return false if self.horizontal? == other.horizontal?
-    if self.horizontal?
+    return false if horizontal? == other.horizontal?
+    if horizontal?
       if (other.head.y..other.tail.y).cover?(@head.y) && (@head.x..@tail.x).cover?(other.head.x)
         return Point.new other.head.x, @head.y
       end
@@ -67,7 +67,7 @@ class Line
   end
 
   def cover? point
-    if self.horizontal?
+    if horizontal?
       return point.y == @head.y && (@head.x..@tail.x).cover?(point.x)
     else
       return point.x == @head.x && (@head.y..@tail.y).cover?(point.y)
@@ -150,9 +150,9 @@ end
 
 def num_times segments, n
   segments = segments.map { |e| e.split(" ").map(&:to_i) }
-  lines = segments.map do |e|
-    head = Point.new e[0], e[1]
-    tail = Point.new e[2], e[3]
+  lines = segments.map do |x1, y1, x2, y2|
+    head = Point.new x1, y1
+    tail = Point.new x2, y2
     Line.new head, tail
   end
 
@@ -177,7 +177,7 @@ def num_times segments, n
   return pen_lift - 1
 end
 
-a = num_times(["-252927 -1000000 -252927 549481","628981 580961 -971965 580961",
+p num_times(["-252927 -1000000 -252927 549481","628981 580961 -971965 580961",
 "159038 -171934 159038 -420875","159038 923907 159038 418077",
 "1000000 1000000 -909294 1000000","1000000 -420875 1000000 66849",
 "1000000 -171934 628981 -171934","411096 66849 411096 -420875",
@@ -202,6 +202,6 @@ a = num_times(["-252927 -1000000 -252927 549481","628981 580961 -971965 580961",
 "-252927 923907 -252927 580961","1000000 549481 -971965 549481",
 "-909294 66849 628981 66849","-252927 418077 628981 418077",
 "159038 -171934 -909294 -171934","-252927 549481 159038 549481"], 824759) # => 19
-b = num_times(["-10 0 10 0","0 -10 0 10"], 1) # => 1
-c = num_times(["-10 0 0 0","0 0 10 0","0 -10 0 0","0 0 0 10"], 1) # => 1
-d = num_times(["-10 0 0 0","0 0 10 0","0 -10 0 0","0 0 0 10"], 4) # => 0
+p num_times(["-10 0 10 0","0 -10 0 10"], 1) # => 1
+p num_times(["-10 0 0 0","0 0 10 0","0 -10 0 0","0 0 0 10"], 1) # => 1
+p num_times(["-10 0 0 0","0 0 10 0","0 -10 0 0","0 0 0 10"], 4) # => 0
