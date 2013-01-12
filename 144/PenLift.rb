@@ -76,17 +76,26 @@ class Line
 end
 
 def merge_overlap!(lines)
-  i = 0
-  while i < lines.size
-    lines[i+1..-1].each_with_index do |l2, j|
-      if lines[i].merge! l2
-        #lines.delete l2
-        lines.delete_at(i+j+1)
-        i -= 1
-        break
-      end
+#  i = 0
+#  while i < lines.size
+#    lines[i+1..-1].each_with_index do |l2, j|
+#      if lines[i].merge! l2
+#        #lines.delete l2
+#        lines.delete_at(i+j+1)
+#        i -= 1
+#        break
+#      end
+#    end
+#    i += 1
+#  end
+  
+  (lines.size - 1).downto(0) do |i|
+    lines[0...i].each do |line2|
+        if line2.merge! lines[i]
+            lines.delete_at i
+            break
+        end
     end
-    i += 1
   end
 end
 
