@@ -1,4 +1,6 @@
-def get_longest(single, multiple)
+# running time depends on var longest, if longest = 1 all the time,
+# this is O(n^2). But if longest = n/2 half the time, this becomes O(n^3)
+def get_longest_1(single, multiple)
     longest = 0
     sofar = 0
     0.upto(single.size - 1) do |i|
@@ -14,6 +16,27 @@ def get_longest(single, multiple)
         end
     end
     return longest
+end
+
+# O(n^2)
+def get_longest(single, multiple)
+    max = 0
+    (-single.size).upto(multiple.size - 1) do |offset|
+        0.upto(9) do |k|
+            count = 0
+            (0...single.size).each do |i|
+                if (i+offset) >= 0 and (i+offset) < multiple.size
+                    if single[i].to_i * k == multiple[i+offset].to_i
+                        count += 1
+                        max = count if count > max
+                    else
+                        count = 0
+                    end
+                end
+            end
+        end
+    end
+    return max
 end
 
 def multiple?(single, multiple)
