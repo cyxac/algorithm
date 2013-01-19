@@ -6,7 +6,7 @@ def determine(x, y)
         x1, y1 = point1
         x2, y2 = point2
         angle = Math.atan2(y2 - y1, x2 - x1)
-        next if angle == used_angle
+        next if !used_angle.nil? and considered? angle, used_angle
         r_points = points.map do |x, y|
             [x*Math.cos(-angle) - y*Math.sin(-angle),
             x*Math.sin(-angle) + y*Math.cos(-angle)]
@@ -24,8 +24,20 @@ def determine(x, y)
     return "inconsistent" if found == 0
 end
 
+def considered?(angle, used)
+    equal?(angle, used) or equal?((angle - used).abs%(Math::PI/2), 0)
+end
+
+$delta = 1.0e-5
+def equal?(a, b)
+    (a - b).abs < $delta
+end
+
+def less?(a, b)
+    (b - a) > $delta
+end
+
 def good_for_square?(points)
-    #p points
     x_min, x_max, y_min, y_max = points.reduce(
         [Float::INFINITY, 
         -Float::INFINITY, 
@@ -42,21 +54,21 @@ def good_for_square?(points)
     
     pos = [0]*8
     points.each do |x, y|
-        if x == x_min and y == y_min
+        if equal?(x, x_min) and equal?(y, y_min)
             pos[0] = 1
-        elsif x_min < x and x < x_max and y == y_min
+        elsif less?(x_min, x) and less?(x, x_max) and equal?(y, y_min)
             pos[1] = 1
-        elsif x == x_max and y == y_min
+        elsif equal?(x, x_max) and equal?(y, y_min)
             pos[2] = 1
-        elsif x == x_min and y_min < y and y < y_max
+        elsif equal?(x, x_min) and less?(y_min, y) and less?(y, y_max)
             pos[3] = 1
-        elsif x == x_max and y_min < y and y < y_max
+        elsif equal?(x, x_max) and less?(y_min, y) and less?(y, y_max)
             pos[4] = 1
-        elsif x == x_min and y == y_max
+        elsif equal?(x, x_min) and equal?(y, y_max)
             pos[5] = 1
-        elsif x_min < x and x < x_max and y == y_max
+        elsif less?(x_min, x) and less?(x, x_max) and equal?(y, y_max)
             pos[6] = 1
-        elsif x == x_max and y == y_max
+        elsif equal?(x, x_max) and equal?(y, y_max)
             pos[7] = 1
         else
             return false
@@ -69,24 +81,33 @@ def good_for_square?(points)
         return "ambiguous"
     elsif [pos[1], pos[3], pos[4],pos[6]] == [1,1,1,1]
         #case O
-        return width == height
+        return equal?(width, height)
     elsif pos[6] == 0 and pos[1] == 0
         #case ||
-        return "ambiguous" if height < width
-        return true if height == width
-        return false if height > width
+        return "ambiguous" if less?(height, width)
+        return equal?(height, width)
     elsif pos[3] == 0 and pos[4] == 0
         #case =
-        return "ambiguous" if width < height
-        return true if width == height
-        return false if width > height
+        return "ambiguous" if less?(width, height)
+        return equal? width, height
     elsif pos[6] == 0 or pos[1] == 0
         #case U and n
-        return height <= width
+        less?(height, width) or equal?(height, width)
     elsif pos[3] == 0 or pos[4] == 0
         #case C and )
-        return width <= height
+        less?(width, height) or equal?(width, height)
     end
 end
 
-p determine([0,0,2,3,5,5,3,2],[2,3,0,0,3,2,5,5])
+p determine([0,0,2,3,5,5,3,2],[2,3,0,0,3,2,5,5]) # ambiguous
+p determine([0,0,10,10,4],[0,10,0,10,5]) # inconsistent
+p determine([1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,4,5,6,7,8,9,10,11,12,13,
+13,13,13,13,13,13,13,13,13,13,13,13,12,11,10,9,8,7,6,5,4,3,2],
+[1,2,3,4,5,6,7,8,9,10,11,12,13,13,13,13,13,13,13,13,13,13,13,13,13,
+12,11,10,9,8,7,6,5,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1]) # consistent
+p determine([0,4,8,-5,-1,3], [0,3,6,15,18,21]) # consistent
+p determine([0,4,8,-5,-1,3,16], [0,3,6,15,18,21,12]) # inconsistent
+p determine([0,4,8,-5,-1], [0,3,6,15,18]) # ambiguous
+p determine([998,-1000,-998,1000,999], [1000,998,-1000,-998,0]) # inconsistent
+p determine([0,1,2,0,100], [0,0,0,1,140]) # consistent
+p determine([0,1,2,0,2,0], [0,0,0,2,2,3]) # inconsistent
