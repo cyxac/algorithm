@@ -25,7 +25,7 @@ def determine(x, y)
 end
 
 def considered?(angle, used)
-    equal?(angle, used) or equal?((angle - used).abs%(Math::PI/2), 0)
+    equal?((angle - used).abs%(Math::PI/2), 0)
 end
 
 $delta = 1.0e-5
@@ -48,7 +48,7 @@ def good_for_square?(points)
             [point[1], memo[2]].min,
             [point[1], memo[3]].max,]
     end
-    return "ambiguous" if y_min == y_max #case _
+    return "ambiguous" if equal? y_min, y_max #case _
     width = x_max - x_min
     height = y_max - y_min
     
@@ -111,3 +111,5 @@ p determine([0,4,8,-5,-1], [0,3,6,15,18]) # ambiguous
 p determine([998,-1000,-998,1000,999], [1000,998,-1000,-998,0]) # inconsistent
 p determine([0,1,2,0,100], [0,0,0,1,140]) # consistent
 p determine([0,1,2,0,2,0], [0,0,0,2,2,3]) # inconsistent
+p determine([1,2,3,4,5],[0,0,0,0,0]) # ambiguous
+p determine([0,0,0,0,0],[1,2,3,4,5]) # ambiguous
