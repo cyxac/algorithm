@@ -127,7 +127,7 @@ def split_into_connected_graphs graph
   connected_graphs = []
   queue = []
   while !graph.empty?
-    queue << graph.first[1]
+    queue << graph.first[1] # first key-value pair's value
     connected_graph = {}
     while !queue.empty?
       vertice = queue.shift
