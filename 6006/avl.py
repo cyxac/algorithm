@@ -13,9 +13,9 @@ def update_height(node):
 
 class AVL(bst.BST):
     """
-AVL binary search tree implementation.
-Supports insert, delete, find, find_min, next_larger each in O(lg n) time.
-"""
+    AVL binary search tree implementation.
+    Supports insert, delete, find, find_min, next_larger each in O(lg n) time.
+    """
     def left_rotate(self, x):
         y = x.right
         y.parent = x.parent

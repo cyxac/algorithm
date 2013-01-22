@@ -20,5 +20,5 @@ def make_assumption head, input
   return origin.join
 end
 
-decode "12221112222221112221111111112221111"
+p decode "12221112222221112221111111112221111"
 
