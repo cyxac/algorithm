@@ -14,7 +14,7 @@ def counting_sort(input, k)
     return output
 end
 
-def radix_sort(A, d)
+def radix_sort(a, d)
 #    for i in 1 to d
 #        use a stable sort to sort array A on digit i
 end
