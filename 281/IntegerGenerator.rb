@@ -11,13 +11,14 @@ def next_integer(allowed, current)
     (current.size-1).downto(0) do |i|
         if rank[i] != allowed.size - 1
             current[i] = allowed[rank[i]+1].to_s
-            (i+1).upto(current.size-1) { |i2| current[i2] = allowed[0].to_s }
             return current
+        else
+            current[i] = allowed[0].to_s
         end
     end
     
     non_zero = allowed.index { |int| int != 0 }
-    return allowed[non_zero].to_s + allowed[0].to_s * current.size
+    return allowed[non_zero].to_s + current
 end
 
 p next_integer([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], "16")
