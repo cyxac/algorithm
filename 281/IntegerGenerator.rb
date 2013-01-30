@@ -3,7 +3,7 @@ def next_integer(allowed, current)
     rank = []
     return "INVALID INPUT" if current[0] == "0" or current[0] == "-"
     current.each_char do |ch|
-        i = allowed.index(ch.to_i)
+        i = bsearch(allowed, ch.to_i)
         return "INVALID INPUT" if i.nil?
         rank << i
     end
@@ -19,6 +19,19 @@ def next_integer(allowed, current)
     
     non_zero = allowed.index { |int| int != 0 }
     return allowed[non_zero].to_s + current
+end
+
+def bsearch(array, k, l=0, h=array.size-1)
+    while l <= h
+        middle = (l + h)/2
+        return middle if array[middle] == k
+        if k < array[middle]
+            h = middle-1
+        else
+            l = middle+1
+        end
+    end
+    return nil
 end
 
 p next_integer([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], "16")
