@@ -128,7 +128,7 @@ def split_into_connected_graphs graph
   queue = []
   while !graph.empty?
     queue << graph.first[1] # first key-value pair's value
-    connected_graph = {}
+    connected_graph = Hash[graph.first]
     while !queue.empty?
       vertice = queue.shift
       vertice.connected.each do |point|
