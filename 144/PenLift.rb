@@ -1,12 +1,18 @@
+require 'set'
+
 class Point
-  attr_accessor :x, :y, :connected
+  attr_accessor :x, :y
 
   def initialize(x, y)
-    @x, @y, @connected = x, y, []
+    @x, @y = x, y
   end
   
-  def to_s
-    "(#@x, #@y)"
+  def eql? other
+    return self.== other
+  end
+  
+  def hash
+    [@x,@y].hash
   end
 
   def == other
@@ -108,40 +114,63 @@ def split_intersect! lines
   end
 end
 
-def build_graph edges
-  graph = {}
-  edges.each do |l|
-    graph[l.head.to_s] ||= l.head
-    head = graph[l.head.to_s]
-
-    graph[l.tail.to_s] ||= l.tail
-    tail = graph[l.tail.to_s]
-
-    head.connected << tail
-    tail.connected << head
-  end
-  return graph
+def build_adj edges
+    adj = {}
+    edges.each do |e|
+        adj[e.head] ||= []
+        adj[e.head] << e.tail
+        
+        adj[e.tail] ||= []
+        adj[e.tail] << e.head
+    end
+    return adj
 end
 
-def split_into_connected_graphs graph
-  connected_graphs = []
-  queue = []
-  while !graph.empty?
-    queue << graph.first[1] # first key-value pair's value
-    connected_graph = Hash[graph.first]
-    while !queue.empty?
-      vertice = queue.shift
-      vertice.connected.each do |point|
-        if !connected_graph.has_key?(point.to_s) # not recorded yet
-          queue << point
-          connected_graph[point.to_s] = point
-          graph.delete(point.to_s)
+def split_into_connected_graphs_bfs adj
+    graphs = []
+    seen = Set.new
+    adj.each_key do |v|
+        if not seen.include? v
+            queue = [v]
+            connected_graph = Set.new [v]
+            while !queue.empty?
+              vertice = queue.shift
+              adj[vertice].each do |point|
+                if !connected_graph.include?(point) # not recorded yet
+                    seen << point
+                    queue << point
+                    connected_graph << point
+                end
+              end
+            end
+            graphs << connected_graph
         end
-      end
     end
-    connected_graphs << connected_graph
-  end
-  return connected_graphs
+    graphs
+end
+
+def split_into_connected_graphs_dfs adj
+    graphs = []
+    seen = Set.new
+    adj.each_key do |v|
+        if not seen.include? v
+            seen << v
+            connected_graph = Set.new [v]
+            graphs << dfs_visit(v, adj, seen, connected_graph)
+        end
+    end
+    graphs
+end
+
+def dfs_visit(s, adj, seen, connected_graph)
+    adj[s].each do |neighbor|
+        if not seen.include? neighbor
+            seen << neighbor
+            connected_graph << neighbor
+            dfs_visit(neighbor, adj, seen, connected_graph)
+        end
+    end
+    return connected_graph
 end
 
 def num_times segments, n
@@ -156,9 +185,9 @@ def num_times segments, n
 
   split_intersect! lines
 
-  whole_graph = build_graph lines
+  adj = build_adj lines
 
-  connected_graphs = split_into_connected_graphs whole_graph
+  connected_graphs = split_into_connected_graphs_dfs adj
 
   if n % 2 == 0
     return connected_graphs.size - 1
@@ -166,7 +195,7 @@ def num_times segments, n
 
   pen_lift = 0
   connected_graphs.each do |graph|
-    odd_vertices = graph.count {|k, v| v.connected.size % 2 == 1}
+    odd_vertices = graph.count {|v| adj[v].size % 2 == 1}
     pen_lift += odd_vertices > 0 ? odd_vertices/2 : 1
   end
 
@@ -201,3 +230,14 @@ p num_times(["-252927 -1000000 -252927 549481","628981 580961 -971965 580961",
 p num_times(["-10 0 10 0","0 -10 0 10"], 1) # => 1
 p num_times(["-10 0 0 0","0 0 10 0","0 -10 0 0","0 0 0 10"], 1) # => 1
 p num_times(["-10 0 0 0","0 0 10 0","0 -10 0 0","0 0 0 10"], 4) # => 0
+p num_times(
+    ["0 0 1 0",   "2 0 4 0",   "5 0 8 0",   "9 0 13 0",
+     "0 1 1 1",   "2 1 4 1",   "5 1 8 1",   "9 1 13 1",
+     "0 0 0 1",   "1 0 1 1",   "2 0 2 1",   "3 0 3 1",
+     "4 0 4 1",   "5 0 5 1",   "6 0 6 1",   "7 0 7 1",
+     "8 0 8 1",   "9 0 9 1",   "10 0 10 1", "11 0 11 1",
+     "12 0 12 1", "13 0 13 1"], 1) # 6
+p num_times(["-2 6 -2 1",  "2 6 2 1",  "6 -2 1 -2",  "6 2 1 2",
+             "-2 5 -2 -1", "2 5 2 -1", "5 -2 -1 -2", "5 2 -1 2",
+             "-2 1 -2 -5", "2 1 2 -5", "1 -2 -5 -2", "1 2 -5 2",
+             "-2 -1 -2 -6","2 -1 2 -6","-1 -2 -6 -2","-1 2 -6 2"],5) # 3
