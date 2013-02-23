@@ -21,9 +21,9 @@ def num_paths_bottomup distance, max_height, landmarks
     return cache1[[true,1,landmarks.size]]
 end
 
-def num_paths_2 distance, max_height, landmarks
+def num_paths_topdown distance, max_height, landmarks
     memo = {}
-    num_paths_topdown = lambda do |distance, height, seen_max, num_lm_seen|
+    num_paths_recursive = lambda do |distance, height, seen_max, num_lm_seen|
         return memo[[distance, height, seen_max, num_lm_seen]] if memo.has_key?([distance,height, seen_max, num_lm_seen])
         if distance == 0
             return 1 if seen_max == false and height == 0 and num_lm_seen == 0 
@@ -42,17 +42,17 @@ def num_paths_2 distance, max_height, landmarks
         end
         
         if seen_max and not at_max
-            num_paths += num_paths_topdown.call(distance-1, height+1, true, previous_lm)
-            num_paths += num_paths_topdown.call(distance-1, height, true, previous_lm)
-            num_paths += num_paths_topdown.call(distance-1, height-1, true, previous_lm)
+            num_paths += num_paths_recursive.call(distance-1, height+1, true, previous_lm)
+            num_paths += num_paths_recursive.call(distance-1, height, true, previous_lm)
+            num_paths += num_paths_recursive.call(distance-1, height-1, true, previous_lm)
         elsif seen_max and at_max
-            num_paths += num_paths_topdown.call(distance-1, height, true, previous_lm)
-            num_paths += num_paths_topdown.call(distance-1, height-1, false, previous_lm)
-            num_paths += num_paths_topdown.call(distance-1, height-1, true, previous_lm)
+            num_paths += num_paths_recursive.call(distance-1, height, true, previous_lm)
+            num_paths += num_paths_recursive.call(distance-1, height-1, false, previous_lm)
+            num_paths += num_paths_recursive.call(distance-1, height-1, true, previous_lm)
         elsif not seen_max and not at_max
-            num_paths += num_paths_topdown.call(distance-1, height+1, false, previous_lm)
-            num_paths += num_paths_topdown.call(distance-1, height, false, previous_lm)
-            num_paths += num_paths_topdown.call(distance-1, height-1, false, previous_lm)
+            num_paths += num_paths_recursive.call(distance-1, height+1, false, previous_lm)
+            num_paths += num_paths_recursive.call(distance-1, height, false, previous_lm)
+            num_paths += num_paths_recursive.call(distance-1, height-1, false, previous_lm)
         else
             return 0
         end
@@ -61,11 +61,11 @@ def num_paths_2 distance, max_height, landmarks
         num_paths
     end
     
-    num_paths_topdown.call distance-1 , 1, true, landmarks.size
+    num_paths_recursive.call distance-1 , 1, true, landmarks.size
 end
 
-puts num_paths_2(5, 2, []) # 3
-puts num_paths_2(2, 45, []) # 0
-puts num_paths_2(5, 2, [2,2]) # 1
-puts num_paths_2(8, 3, [2,2,3,1]) # 7
-puts num_paths_2(38, 11, [4,5,8,5,6]) # 201667830444
+puts num_paths_topdown(5, 2, []) # 3
+puts num_paths_topdown(2, 45, []) # 0
+puts num_paths_topdown(5, 2, [2,2]) # 1
+puts num_paths_topdown(8, 3, [2,2,3,1]) # 7
+puts num_paths_topdown(38, 11, [4,5,8,5,6]) # 201667830444
