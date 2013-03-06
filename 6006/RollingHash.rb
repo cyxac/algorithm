@@ -4,7 +4,7 @@ class RollingHash
         @hash = 0
         @magic = 1
         @p = 23 #random large prime >= size of pattern, but less than word size
-        @inverse_base = @base**(@p-2) % p
+        @inverse_base = @base**(@p-2) % @p
     end
     
     def hash
@@ -18,7 +18,7 @@ class RollingHash
     
     def skip val
         @hash = (@hash - @magic*val) % @p
-        @magic = @magic * @inverse_base % p
+        @magic = @magic * @inverse_base % @p
         # modulo arithmethic for: @magic = @magic / @base % @p
     end
 end
