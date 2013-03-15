@@ -20,6 +20,10 @@ class Graph
         add_edge u, v
         @weight[[u, v]] = w
     end
+    
+    def each_vertex &block
+        @adj.each_key &block
+    end
 end
 
 Default_predicate = lambda { |v| false }
@@ -140,15 +144,15 @@ class DFSResult
     end
 end
 
-def dfs_visit(v, adj, result, parent = nil, predicate = Default_predicate)
+def dfs_visit(v, g, result, parent = nil, predicate = Default_predicate)
     return v if predicate.call(v)
     result.parent[v] = parent
     result.t += 1
     result.start_time[v] = result.t
-    result.edge_type[[parent, v]] = "tree"
-    adj[v].each do |neighbor|
+    result.edge_type[[parent, v]] = "tree" if not parent.nil?
+    g.adj[v].each do |neighbor|
         if not result.parent.has_key? neighbor
-            dfs_visit(neighbor, adj, result, v, predicate)
+            dfs_visit(neighbor, g, result, v, predicate)
         elsif not result.finish_time.has_key? neighbor
             result.edge_type[[v, neighbor]] = "back"
         elsif result.start_time[v] < result.start_time[neighbor]
@@ -162,28 +166,33 @@ def dfs_visit(v, adj, result, parent = nil, predicate = Default_predicate)
     result.order << v
 end
 
-def dfs(adj, predicate = Default_predicate)
+def dfs(g, predicate = Default_predicate)
     result = DFSResult.new
-    adj.each_key do |v|
+    g.each_vertex do |v|
         if not result.parent.has_key? v
-            dfs_visit(v, adj, result, nil, predicate)
+            dfs_visit(v, g, result, nil, predicate)
         end
     end
     result
 end
 
-#g = {1 =>[2,4], 2=>[3], 3=> [4], 4=> [2]}
+#g = Graph.new
+#g.add_edge 1, 2
+#g.add_edge 2, 3
+#g.add_edge 3, 4
+#g.add_edge 4, 2
+#g.add_edge 1, 4
 #p dfs(g)
 
-g = Graph.new
-g.add_edge_weight(1, 2, 16)
-g.add_edge_weight(1, 3, 13)
-g.add_edge_weight(3, 2, 4)
-g.add_edge_weight(2, 4, 12)
-g.add_edge_weight(4, 3, 9)
-g.add_edge_weight(3, 5, 14)
-g.add_edge_weight(5, 4, 7)
-g.add_edge_weight(4, 6, 20)
-g.add_edge_weight(5, 6, 4)
-#p g
-p ford_Fulkerson(g, 1, 6)
+#g = Graph.new
+#g.add_edge_weight(1, 2, 16)
+#g.add_edge_weight(1, 3, 13)
+#g.add_edge_weight(3, 2, 4)
+#g.add_edge_weight(2, 4, 12)
+#g.add_edge_weight(4, 3, 9)
+#g.add_edge_weight(3, 5, 14)
+#g.add_edge_weight(5, 4, 7)
+#g.add_edge_weight(4, 6, 20)
+#g.add_edge_weight(5, 6, 4)
+##p g
+#p ford_Fulkerson(g, 1, 6)
