@@ -15,7 +15,7 @@ def determine(x, y)
         answer = good_for_square? r_points
         return answer if answer == "ambiguous"
         if answer == true
-            found += 1 if answer == true
+            found += 1
             used_angle = angle    
         end
         return "ambiguous" if found > 1
