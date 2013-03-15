@@ -52,9 +52,10 @@ def bfs(g, s, predicate = default_predicate)
 end
 
 class MaxFlowResult
-    attr_accessor :flow
+    attr_accessor :flow, :value
     def initialize
         @flow = {}
+        @value = 0
     end
 end
 
@@ -71,6 +72,7 @@ def ford_Fulkerson g, s, t
         end
         
         path_cap = path_capacity(bfs_res, t, res.flow, g)
+        res.value += path_cap
         
         v = t
         while bfs_res.parent[v]
