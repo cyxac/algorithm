@@ -12,8 +12,10 @@ class Graph
         if not @adj.has_key? u
             @adj[u] = []
         end
-        @adj[u] << v
-        @edges << [u, v]
+        if not @edges.include? [u, v]
+            @adj[u] << v
+            @edges << [u, v]
+        end
     end
     
     def add_edge_weight(u, v, w)
@@ -26,8 +28,6 @@ class Graph
     end
 end
 
-Default_predicate = lambda { |v| false }
-
 class BFSResult
     attr_accessor :parent, :level
     def initialize
@@ -36,7 +36,7 @@ class BFSResult
     end
 end
 
-def bfs(g, s, predicate = default_predicate)
+def bfs(g, s, t)
     res = BFSResult.new
     res.level[s] = 0
     res.parent[s] = nil
@@ -44,11 +44,11 @@ def bfs(g, s, predicate = default_predicate)
     while not queue.empty?
         v = queue.shift
         g.adj[v].each do |neighbor|
-            if not g.level.has_key? neighbor
+            if not res.level.has_key? neighbor
                 queue << neighbor
                 res.level[neighbor] = res.level[v]+1
                 res.parent[neighbor] = v
-                return res if predicate.call(v)
+                return res if s == t
             end
         end
     end
@@ -69,67 +69,55 @@ def ford_Fulkerson g, s, t
         res.flow[e] = 0
     end
     
+    g_residual = g
+    
     while true
-        bfs_res = bfs_max_flow g, res.flow, s, t
+        bfs_res = bfs g_residual, s, t
         if bfs_res.parent[t].nil?
             return res
         end
         
-        path_cap = path_capacity(bfs_res, t, res.flow, g)
+        path_cap = path_capacity(bfs_res, t, g_residual)
         res.value += path_cap
+        augment_flow(res.flow, bfs_res, t, g, path_cap)
         
-        v = t
-        while bfs_res.parent[v]
-            parent = bfs_res.parent[v]
-            if g.edges.include? [parent, v]
-                res.flow[[parent, v]] += path_cap
-            else
-                res.flow[[parent,v]] -= path_cap
-            end
-            v = parent
-        end
+        g_residual = create_residual_graph(g, res.flow)
     end
-    res
 end
 
-def path_capacity(bfs_res, t, flow, g)
+def path_capacity(bfs_res, t, g)
     where = t
     path_cap = Float::INFINITY
     while bfs_res.parent[where]
         parent = bfs_res.parent[where]
-        path_cap = [path_cap, residual_cap(parent, where, flow, g)].min
+        path_cap = [path_cap, g.weight[[parent, where]]].min
         where = parent
     end
     path_cap
 end
 
-def residual_cap(u, v, flow, g)
-    if g.edges.include? [u, v]
-        return g.weight[[u, v]] - flow[[u,v]]
-    elsif g.edges.include? [v, u]
-        return res.flow[[v, u]]
-    else
-        return 0
+def augment_flow(flow, bfs_res, t, g, path_cap)
+    where = t
+    while bfs_res.parent[where]
+        parent = bfs_res.parent[where]
+        if g.edges.include? [parent, where]
+            flow[[parent, where]] += path_cap
+        else
+            flow[[where, parent]] -= path_cap
+        end
+        where = parent
     end
 end
 
-def bfs_max_flow(g, flow, s, t)
-    res = BFSResult.new
-    res.level[s] = 0
-    res.parent[s] = nil
-    queue = [s]
-    while not queue.empty?
-        v = queue.shift
-        g.adj[v].each do |neighbor|
-            if not res.level.has_key?(neighbor) and residual_cap(v, neighbor, flow, g) > 0
-                queue << neighbor
-                res.level[neighbor] = res.level[v]+1
-                res.parent[neighbor] = v
-                return res if v == t
-            end
-        end
+def create_residual_graph(g, flow)
+    g_residual = Graph.new
+    g.edges.each do |u, v|
+        uv = g.weight[[u, v]] - flow[[u,v]]
+        vu = flow[[u,v]]
+        g_residual.add_edge_weight(u, v, uv) if uv != 0
+        g_residual.add_edge_weight(v, u, vu) if vu != 0
     end
-    return res
+    g_residual
 end
 
 class DFSResult
@@ -194,5 +182,6 @@ end
 #g.add_edge_weight(5, 4, 7)
 #g.add_edge_weight(4, 6, 20)
 #g.add_edge_weight(5, 6, 4)
-##p g
 #p ford_Fulkerson(g, 1, 6)
+#<@flow={[1, 2]=>12, [1, 3]=>11, [3, 2]=>0, [2, 4]=>12, [4, 3]=>0, [3, 5]=>11, [5, 4]=>7, [4, 6]=>19, [5, 6]=>4}, 
+# @value=23>
