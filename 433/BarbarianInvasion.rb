@@ -1,4 +1,4 @@
-require "./6006/graph"
+require_relative "../6006/graph"
 
 def minimal_detachment country_map, detachment_size
     detachment_size = Hash[("A".."Z").zip(detachment_size)]

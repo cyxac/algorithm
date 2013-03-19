@@ -1,4 +1,4 @@
-require "./6006/graph"
+require_relative "../6006/graph"
 
 def more_classes(classesTaken, requirements)
     g = Graph.new
