@@ -211,9 +211,10 @@ def dijkstra(graph, source)
 end
 
 class MSTResult
-    attr_accessor :parent
+    attr_accessor :parent, :total
     def initialize
         @parent = {}
+        @total = 0
     end
 end
 
@@ -225,13 +226,13 @@ def mst_prim(g, s)
         dist[v] = Float::INFINITY
         parent[v] = nil
     end
-    res.parent[s] = nil
-    
+    dist[s] = 0
     q = PriorityQueue.new
     q.insert([0, s])
     while not q.empty?
         u = q.extract_min[1]
         res.parent[u] = parent[u]
+        res.total += dist[u]
         g.adj[u].each do |v|
             if not res.parent.has_key?(v) and g.weight[[u,v]] < dist[v]
                 if dist[v] == Float::INFINITY
