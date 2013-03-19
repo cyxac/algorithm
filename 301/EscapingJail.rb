@@ -1,4 +1,4 @@
-require "./6006/graph"
+require_relative "../6006/graph"
 
 def getMaxDistance(chain)
     char_values = char_to_int
