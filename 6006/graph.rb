@@ -23,6 +23,17 @@ class Graph
         @weight[[u, v]] = w
     end
     
+    def add_edge_undirected(u, v)
+        add_edge(u, v)
+        add_edge(v, u)
+    end
+    
+    def add_edge_weight_undirected(u, v, w)
+        add_edge_undirected(u, v)
+        @weight[[u,v]] = w
+        @weight[[v,u]] = w
+    end
+    
     def each_vertex &block
         @adj.each_key &block
     end
@@ -164,6 +175,163 @@ def dfs(g, predicate = Default_predicate)
     result
 end
 
+class ShortestPathResult
+    attr_accessor :dist, :parent
+    def initialize
+        @dist = {}
+        @parent = {}
+    end
+end
+
+def dijkstra(graph, source)
+    res = ShortestPathResult.new
+    graph.each_vertex do |v|
+        res.dist[v] = Float::INFINITY
+        res.parent[v] = nil
+    end
+    res.dist[source] = 0
+    q = PriorityQueue.new
+    q.insert([0,source])
+    while not q.empty?
+        u = q.extract_min[1]
+        graph.adj[u].each do |v|
+            new_dist = res.dist[u] + graph.weight[[u,v]]
+            if new_dist < res.dist[v]
+                if res.dist[v] == Float::INFINITY
+                    q.insert([new_dist, v])
+                else
+                    q.decrease_key([res.dist[v], v], [new_dist, v])
+                end
+                res.dist[v] = new_dist
+                res.parent[v] = u
+            end
+        end
+    end
+    res
+end
+
+class MSTResult
+    attr_accessor :parent
+    def initialize
+        @parent = {}
+    end
+end
+
+def mst_prim(g, s)
+    res = MSTResult.new
+    dist = {}
+    parent = {}
+    g.each_vertex do |v|
+        dist[v] = Float::INFINITY
+        parent[v] = nil
+    end
+    res.parent[s] = nil
+    
+    q = PriorityQueue.new
+    q.insert([0, s])
+    while not q.empty?
+        u = q.extract_min[1]
+        res.parent[u] = parent[u]
+        g.adj[u].each do |v|
+            if not res.parent.has_key?(v) and g.weight[[u,v]] < dist[v]
+                if dist[v] == Float::INFINITY
+                    q.insert([g.weight[[u,v]], v])
+                else
+                    q.decrease_key([dist[v], v], [g.weight[[u,v]], v])
+                end
+                dist[v] = g.weight[[u,v]]
+                parent[v] = u
+            end
+        end
+    end
+    res
+end
+
+class PriorityQueue
+    def initialize
+        @heap = [nil]
+        @key_index = {}
+    end
+    
+    def empty?
+        size() == 0
+    end
+    
+    def size
+        @heap.size - 1
+    end
+    
+    def insert(key)
+        @heap << key
+        @key_index[key] = size()
+        decrease_key_by_index(size(), key)
+    end
+    
+    def decrease_key(old, new)
+        if old[1] != new [1]
+            raise "vertex does not match"
+        end
+        index = @key_index[old]
+        if index
+            decrease_key_by_index(index, new)
+        end
+        @key_index.delete old
+    end
+    
+    def decrease_key_by_index(i, key)
+        if (key <=> @heap[i]) > 0
+            raise "new key is larger than current key"
+        end
+        @heap[i] = key
+        while i > 1
+            parent = i / 2
+            if (@heap[parent] <=> key) > 0
+                swap i, parent
+                i = parent
+            else
+                break
+            end
+        end
+    end
+    
+    def swap i, j
+        @heap[i], @heap[j] = @heap[j], @heap[i]
+        @key_index[@heap[i]], @key_index[@heap[j]] = i, j
+    end
+    
+    def extract_min
+        """Removes and returns the minimum key."""
+        if size() < 1
+            return nil
+        end
+        swap(1, size())
+        min = @heap.pop()
+        @key_index.delete min
+        min_heapify(1)
+        return min
+    end
+    
+    def min_heapify(i)
+        l = 2 * i
+        r = 2 * i + 1
+        smallest = i
+        if l <= size() and (@heap[l] <=> @heap[i]) < 0
+            smallest = l
+        end
+        if r <= size() and (@heap[r] <=> @heap[smallest]) < 0
+            smallest = r
+        end
+        if smallest != i
+            swap(i, smallest)
+            min_heapify(smallest)
+        end
+    end
+    
+    def heap
+        @heap
+    end
+end
+
 #g = Graph.new
 #g.add_edge 1, 2
 #g.add_edge 2, 3
@@ -185,3 +353,21 @@ end
 #p ford_Fulkerson(g, 1, 6)
 #<@flow={[1, 2]=>12, [1, 3]=>11, [3, 2]=>0, [2, 4]=>12, [4, 3]=>0, [3, 5]=>11, [5, 4]=>7, [4, 6]=>19, [5, 6]=>4}, 
 # @value=23>
+
+g = Graph.new
+g.add_edge_weight_undirected("a","b", 4)
+g.add_edge_weight_undirected("a","h", 8)
+g.add_edge_weight_undirected("b","h", 11)
+g.add_edge_weight_undirected("b","c", 8)
+g.add_edge_weight_undirected("i","h", 7)
+g.add_edge_weight_undirected("g","h", 1)
+g.add_edge_weight_undirected("i","c", 2)
+g.add_edge_weight_undirected("i","g", 6)
+g.add_edge_weight_undirected("c","d", 7)
+g.add_edge_weight_undirected("c","f", 4)
+g.add_edge_weight_undirected("g","f", 2)
+g.add_edge_weight_undirected("d","e", 9)
+g.add_edge_weight_undirected("d","f", 14)
+g.add_edge_weight_undirected("e","f", 10)
+p mst_prim(g, "a")
+
