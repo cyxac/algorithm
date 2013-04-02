@@ -22,5 +22,19 @@ def find_max_sub_array a
     max_sub
 end
 
-p find_max_sub_array [1, -4, 7, -1, 10]
-p find_max_sub_array [13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7]
+# p find_max_sub_array [1, -4, 7, -1, 10]
+# p find_max_sub_array [13, -3, -25, 20, -3, -16, -23, 18, 20, -7, 12, -5, -22, 15, -4, 7]
+
+def ways_for_sum a
+    max = a.reduce(0, :+)
+    ways = Hash.new(0)
+    ways[0] = 1
+    a.each do |e|
+        max.downto(e) do |sum|
+            ways[sum] += ways[sum-e]
+        end
+    end
+    ways
+end
+
+p ways_for_sum [1, 2, 3, -4]
