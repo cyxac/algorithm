@@ -1,9 +1,10 @@
 require 'set'
 
 class Graph
-    attr_accessor :adj, :edges, :weight
+    attr_accessor :adj, :vertices, :edges, :weight
     def initialize
         @adj = Hash.new []
+        @vertices = Set.new
         @edges = Set.new
         @weight = {}
     end
@@ -15,6 +16,8 @@ class Graph
         if not @edges.include? [u, v]
             @adj[u] << v
             @edges << [u, v]
+            @vertices << u
+            @vertices << v
         end
     end
     
@@ -35,7 +38,7 @@ class Graph
     end
     
     def each_vertex &block
-        @adj.each_key &block
+        @vertices.each &block
     end
 end
 
@@ -72,6 +75,128 @@ class MaxFlowResult
         @flow = {}
         @value = 0
     end
+    
+    def augment_flow(path, t, g, path_cap)
+        where = t
+        @value += path_cap
+        while path.parent[where]
+            parent = path.parent[where]
+            if g.edges.include? [parent, where]
+                @flow[[parent, where]] += path_cap
+            else
+                @flow[[where, parent]] -= path_cap
+            end
+            where = parent
+        end
+    end
+end
+
+class MinCostFlowResult < MaxFlowResult
+    attr_accessor :total_cost
+    def initialize
+        super
+        @total_cost = 0
+    end
+    
+    def augment_flow(path, t, g, path_cap)
+        where = t
+        @value += path_cap
+        while path.parent[where]
+            parent = path.parent[where]
+            if g.edges.include? [parent, where]
+                @flow[[parent, where]] += path_cap
+                @total_cost += path_cap * g.weight[[parent, where]]
+            else
+                @flow[[where, parent]] -= path_cap
+                @total_cost -= path_cap * g.weight[[where, parent]]
+            end
+            where = parent
+        end
+    end
+end
+
+class MinCostFlowGraph < Graph
+    attr_accessor :capacity, :supply
+    def initialize
+        super
+        @capacity = {}
+        @supply = Hash.new(0)
+    end
+    
+    def add_edge_cap_cost(u, v, cap, cost)
+        add_edge_weight u, v, cost
+        @capacity[[u, v]] = cap
+    end
+    
+    def add_supply(node, amount)
+        @supply[node] = amount
+    end
+    
+    def add_demand(node, amount)
+        add_supply(node, -amount)
+    end
+end
+
+def min_cost_flow g
+    #Successive Shortest Path
+    s, t = "source", "sink"
+    g.supply.each do |node, supply|
+        if supply>0
+            g.add_edge_cap_cost(s, node, supply, 0)
+        else
+            g.add_edge_cap_cost(node, t, -supply, 0)
+        end
+    end
+    res = MinCostFlowResult.new
+    g.edges.each do |e|
+        res.flow[e] = 0
+    end
+    
+    potential = bellman_ford(g, s).dist
+    g_residual = reduce_cost g, potential
+    while true
+        dijk = dijkstra g_residual, s
+        return res if dijk.parent[t].nil?
+        
+        path_cap = path_capacity_2(dijk, t, g_residual)
+        res.augment_flow(dijk, t, g, path_cap)
+        g_residual = reduce_cost g_residual, dijk.dist
+        g_residual = update_residual_graph(g_residual, g, res.flow)
+    end
+end
+
+def path_capacity_2(bfs_res, t, g)
+    where = t
+    path_cap = Float::INFINITY
+    while bfs_res.parent[where]
+        parent = bfs_res.parent[where]
+        path_cap = [path_cap, g.capacity[[parent, where]]].min
+        where = parent
+    end
+    path_cap
+end
+
+def update_residual_graph(g_residual, g, flow)
+    g_new = MinCostFlowGraph.new
+    g.edges.each do |u, v|
+        if flow[[u,v]]>0
+            uv = g.capacity[[u, v]] - flow[[u,v]]
+            vu = flow[[u,v]]
+            g_new.add_edge_cap_cost(u, v, uv, 0) if uv != 0
+            g_new.add_edge_cap_cost(v, u, vu, 0) if vu != 0
+        else
+            g_new.add_edge_cap_cost(u, v, g.capacity[[u,v]], g_residual.weight[[u,v]])
+        end
+    end
+    g_new
+end
+
+def reduce_cost g, potential
+    g_residual = MinCostFlowGraph.new
+    g.edges.each do |u, v|
+        g_residual.add_edge_cap_cost u, v, g.capacity[[u,v]], g.weight[[u,v]] + potential[u] - potential[v]
+    end
+    g_residual
 end
 
 def ford_Fulkerson g, s, t
@@ -89,9 +214,8 @@ def ford_Fulkerson g, s, t
         end
         
         path_cap = path_capacity(bfs_res, t, g_residual)
-        res.value += path_cap
-        augment_flow(res.flow, bfs_res, t, g, path_cap)
-        
+        res.augment_flow(bfs_res, t, g, path_cap)
+
         g_residual = create_residual_graph(g, res.flow)
     end
 end
@@ -105,19 +229,6 @@ def path_capacity(bfs_res, t, g)
         where = parent
     end
     path_cap
-end
-
-def augment_flow(flow, bfs_res, t, g, path_cap)
-    where = t
-    while bfs_res.parent[where]
-        parent = bfs_res.parent[where]
-        if g.edges.include? [parent, where]
-            flow[[parent, where]] += path_cap
-        else
-            flow[[where, parent]] -= path_cap
-        end
-        where = parent
-    end
 end
 
 def create_residual_graph(g, flow)
@@ -210,6 +321,31 @@ def dijkstra(graph, source)
     res
 end
 
+def bellman_ford(graph, source)
+    res = ShortestPathResult.new
+    graph.each_vertex do |v|
+        res.dist[v] = Float::INFINITY
+        res.parent[v] = nil
+    end
+    res.dist[source] = 0
+    
+    (graph.vertices.size-1).times do
+        graph.edges.each do |u, v|
+            if res.dist[v] > res.dist[u] + graph.weight[[u, v]]
+                res.dist[v] = res.dist[u] + graph.weight[[u, v]]
+                res.parent[v] = u
+            end
+        end
+    end
+    
+    graph.edges.each do |u, v|
+        if res.dist[v] > res.dist[u] + graph.weight[[u, v]]
+            return false
+        end
+    end
+    res
+end
+
 class MSTResult
     attr_accessor :parent, :total
     def initialize
@@ -280,13 +416,13 @@ class PriorityQueue
     end
     
     def decrease_key_by_index(i, key)
-        if (key <=> @heap[i]) > 0
+        if (key[0] <=> @heap[i][0]) > 0
             raise "new key is larger than current key"
         end
         @heap[i] = key
         while i > 1
             parent = i / 2
-            if (@heap[parent] <=> key) > 0
+            if (@heap[parent][0] <=> key[0]) > 0
                 swap i, parent
                 i = parent
             else
@@ -333,42 +469,57 @@ class PriorityQueue
     end
 end
 
-#g = Graph.new
-#g.add_edge 1, 2
-#g.add_edge 2, 3
-#g.add_edge 3, 4
-#g.add_edge 4, 2
-#g.add_edge 1, 4
-#p dfs(g)
+# g = Graph.new
+# g.add_edge_weight(1, 2, 16)
+# g.add_edge_weight(1, 3, 13)
+# g.add_edge_weight(3, 2, 4)
+# g.add_edge_weight(2, 4, 12)
+# g.add_edge_weight(4, 3, 9)
+# g.add_edge_weight(3, 5, 14)
+# g.add_edge_weight(5, 4, 7)
+# g.add_edge_weight(4, 6, 20)
+# g.add_edge_weight(5, 6, 4)
+# p ford_Fulkerson(g, 1, 6)
+# # <@flow={[1, 2]=>12, [1, 3]=>11, [3, 2]=>0, [2, 4]=>12, [4, 3]=>0, [3, 5]=>11, [5, 4]=>7, [4, 6]=>19, [5, 6]=>4}, 
+# # @value=23>
 
-#g = Graph.new
-#g.add_edge_weight(1, 2, 16)
-#g.add_edge_weight(1, 3, 13)
-#g.add_edge_weight(3, 2, 4)
-#g.add_edge_weight(2, 4, 12)
-#g.add_edge_weight(4, 3, 9)
-#g.add_edge_weight(3, 5, 14)
-#g.add_edge_weight(5, 4, 7)
-#g.add_edge_weight(4, 6, 20)
-#g.add_edge_weight(5, 6, 4)
-#p ford_Fulkerson(g, 1, 6)
-#<@flow={[1, 2]=>12, [1, 3]=>11, [3, 2]=>0, [2, 4]=>12, [4, 3]=>0, [3, 5]=>11, [5, 4]=>7, [4, 6]=>19, [5, 6]=>4}, 
-# @value=23>
+# g = Graph.new
+# g.add_edge_weight_undirected("a","b", 4)
+# g.add_edge_weight_undirected("a","h", 8)
+# g.add_edge_weight_undirected("b","h", 11)
+# g.add_edge_weight_undirected("b","c", 8)
+# g.add_edge_weight_undirected("i","h", 7)
+# g.add_edge_weight_undirected("g","h", 1)
+# g.add_edge_weight_undirected("i","c", 2)
+# g.add_edge_weight_undirected("i","g", 6)
+# g.add_edge_weight_undirected("c","d", 7)
+# g.add_edge_weight_undirected("c","f", 4)
+# g.add_edge_weight_undirected("g","f", 2)
+# g.add_edge_weight_undirected("d","e", 9)
+# g.add_edge_weight_undirected("d","f", 14)
+# g.add_edge_weight_undirected("e","f", 10)
+# p mst_prim(g, "a")
 
-g = Graph.new
-g.add_edge_weight_undirected("a","b", 4)
-g.add_edge_weight_undirected("a","h", 8)
-g.add_edge_weight_undirected("b","h", 11)
-g.add_edge_weight_undirected("b","c", 8)
-g.add_edge_weight_undirected("i","h", 7)
-g.add_edge_weight_undirected("g","h", 1)
-g.add_edge_weight_undirected("i","c", 2)
-g.add_edge_weight_undirected("i","g", 6)
-g.add_edge_weight_undirected("c","d", 7)
-g.add_edge_weight_undirected("c","f", 4)
-g.add_edge_weight_undirected("g","f", 2)
-g.add_edge_weight_undirected("d","e", 9)
-g.add_edge_weight_undirected("d","f", 14)
-g.add_edge_weight_undirected("e","f", 10)
-p mst_prim(g, "a")
+# g = MinCostFlowGraph.new
+# g.add_edge_cap_cost(1, 3, 1, 1)
+# g.add_edge_cap_cost(1, 4, 1, 2)
+# g.add_edge_cap_cost(2, 3, 1, 1)
+# g.add_edge_cap_cost(2, 4, 2, 2)
+# g.add_supply(1, 2)
+# g.add_supply(2, 2)
+# g.add_demand(3, 2)
+# g.add_demand(4, 2)
+# p min_cost_flow g
 
+# g = Graph.new
+# g.add_edge_weight("s", "t", 10)
+# g.add_edge_weight("s", "y", 5)
+# g.add_edge_weight("t", "y", 2)
+# g.add_edge_weight("t", "x", 1)
+# g.add_edge_weight("y", "x", 9)
+# g.add_edge_weight("y", "t", 3)
+# g.add_edge_weight("y", "z", 2)
+# g.add_edge_weight("x", "z", 4)
+# g.add_edge_weight("z", "x", 6)
+# g.add_edge_weight("z", "s", 7)
+# p dijkstra g, "s"
