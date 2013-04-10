@@ -469,57 +469,59 @@ class PriorityQueue
     end
 end
 
-# g = Graph.new
-# g.add_edge_weight(1, 2, 16)
-# g.add_edge_weight(1, 3, 13)
-# g.add_edge_weight(3, 2, 4)
-# g.add_edge_weight(2, 4, 12)
-# g.add_edge_weight(4, 3, 9)
-# g.add_edge_weight(3, 5, 14)
-# g.add_edge_weight(5, 4, 7)
-# g.add_edge_weight(4, 6, 20)
-# g.add_edge_weight(5, 6, 4)
-# p ford_Fulkerson(g, 1, 6)
-# # <@flow={[1, 2]=>12, [1, 3]=>11, [3, 2]=>0, [2, 4]=>12, [4, 3]=>0, [3, 5]=>11, [5, 4]=>7, [4, 6]=>19, [5, 6]=>4}, 
-# # @value=23>
-
-# g = Graph.new
-# g.add_edge_weight_undirected("a","b", 4)
-# g.add_edge_weight_undirected("a","h", 8)
-# g.add_edge_weight_undirected("b","h", 11)
-# g.add_edge_weight_undirected("b","c", 8)
-# g.add_edge_weight_undirected("i","h", 7)
-# g.add_edge_weight_undirected("g","h", 1)
-# g.add_edge_weight_undirected("i","c", 2)
-# g.add_edge_weight_undirected("i","g", 6)
-# g.add_edge_weight_undirected("c","d", 7)
-# g.add_edge_weight_undirected("c","f", 4)
-# g.add_edge_weight_undirected("g","f", 2)
-# g.add_edge_weight_undirected("d","e", 9)
-# g.add_edge_weight_undirected("d","f", 14)
-# g.add_edge_weight_undirected("e","f", 10)
-# p mst_prim(g, "a")
-
-# g = MinCostFlowGraph.new
-# g.add_edge_cap_cost(1, 3, 1, 1)
-# g.add_edge_cap_cost(1, 4, 1, 2)
-# g.add_edge_cap_cost(2, 3, 1, 1)
-# g.add_edge_cap_cost(2, 4, 2, 2)
-# g.add_supply(1, 2)
-# g.add_supply(2, 2)
-# g.add_demand(3, 2)
-# g.add_demand(4, 2)
-# p min_cost_flow g
-
-# g = Graph.new
-# g.add_edge_weight("s", "t", 10)
-# g.add_edge_weight("s", "y", 5)
-# g.add_edge_weight("t", "y", 2)
-# g.add_edge_weight("t", "x", 1)
-# g.add_edge_weight("y", "x", 9)
-# g.add_edge_weight("y", "t", 3)
-# g.add_edge_weight("y", "z", 2)
-# g.add_edge_weight("x", "z", 4)
-# g.add_edge_weight("z", "x", 6)
-# g.add_edge_weight("z", "s", 7)
-# p dijkstra g, "s"
+if __FILE__ == $0
+    # g = Graph.new
+    # g.add_edge_weight(1, 2, 16)
+    # g.add_edge_weight(1, 3, 13)
+    # g.add_edge_weight(3, 2, 4)
+    # g.add_edge_weight(2, 4, 12)
+    # g.add_edge_weight(4, 3, 9)
+    # g.add_edge_weight(3, 5, 14)
+    # g.add_edge_weight(5, 4, 7)
+    # g.add_edge_weight(4, 6, 20)
+    # g.add_edge_weight(5, 6, 4)
+    # p ford_Fulkerson(g, 1, 6)
+    # # <@flow={[1, 2]=>12, [1, 3]=>11, [3, 2]=>0, [2, 4]=>12, [4, 3]=>0, [3, 5]=>11, [5, 4]=>7, [4, 6]=>19, [5, 6]=>4}, 
+    # # @value=23>
+    
+    # g = Graph.new
+    # g.add_edge_weight_undirected("a","b", 4)
+    # g.add_edge_weight_undirected("a","h", 8)
+    # g.add_edge_weight_undirected("b","h", 11)
+    # g.add_edge_weight_undirected("b","c", 8)
+    # g.add_edge_weight_undirected("i","h", 7)
+    # g.add_edge_weight_undirected("g","h", 1)
+    # g.add_edge_weight_undirected("i","c", 2)
+    # g.add_edge_weight_undirected("i","g", 6)
+    # g.add_edge_weight_undirected("c","d", 7)
+    # g.add_edge_weight_undirected("c","f", 4)
+    # g.add_edge_weight_undirected("g","f", 2)
+    # g.add_edge_weight_undirected("d","e", 9)
+    # g.add_edge_weight_undirected("d","f", 14)
+    # g.add_edge_weight_undirected("e","f", 10)
+    # p mst_prim(g, "a")
+    
+    g = MinCostFlowGraph.new
+    g.add_edge_cap_cost(1, 3, 1, 1)
+    g.add_edge_cap_cost(1, 4, 1, 2)
+    g.add_edge_cap_cost(2, 3, 1, 1)
+    g.add_edge_cap_cost(2, 4, 2, 2)
+    g.add_supply(1, 2)
+    g.add_supply(2, 2)
+    g.add_demand(3, 2)
+    g.add_demand(4, 2)
+    p min_cost_flow g
+    
+    # g = Graph.new
+    # g.add_edge_weight("s", "t", 10)
+    # g.add_edge_weight("s", "y", 5)
+    # g.add_edge_weight("t", "y", 2)
+    # g.add_edge_weight("t", "x", 1)
+    # g.add_edge_weight("y", "x", 9)
+    # g.add_edge_weight("y", "t", 3)
+    # g.add_edge_weight("y", "z", 2)
+    # g.add_edge_weight("x", "z", 4)
+    # g.add_edge_weight("z", "x", 6)
+    # g.add_edge_weight("z", "s", 7)
+    # p dijkstra g, "s"
+end
