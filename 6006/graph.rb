@@ -143,7 +143,7 @@ def min_cost_flow g
     g.supply.each do |node, supply|
         if supply>0
             g.add_edge_cap_cost(s, node, supply, 0)
-        else
+        elsif supply<0
             g.add_edge_cap_cost(node, t, -supply, 0)
         end
     end
@@ -156,13 +156,22 @@ def min_cost_flow g
     g_residual = reduce_cost g, potential
     while true
         dijk = dijkstra g_residual, s
-        return res if dijk.parent[t].nil?
+        break if dijk.parent[t].nil?
         
         path_cap = path_capacity_2(dijk, t, g_residual)
         res.augment_flow(dijk, t, g, path_cap)
-        g_residual = reduce_cost g_residual, dijk.dist
-        g_residual = update_residual_graph(g_residual, g, res.flow)
+        g_residual = update_residual_graph(g, dijk.dist, res.flow)
     end
+    
+    g.supply.each do |node, supply|
+        if supply>0
+            res.flow.delete [s, node]
+        elsif supply<0
+            res.flow.delete [node, t]
+        end
+    end
+    
+    res
 end
 
 def path_capacity_2(bfs_res, t, g)
@@ -176,7 +185,7 @@ def path_capacity_2(bfs_res, t, g)
     path_cap
 end
 
-def update_residual_graph(g_residual, g, flow)
+def update_residual_graph(g, potential, flow)
     g_new = MinCostFlowGraph.new
     g.edges.each do |u, v|
         if flow[[u,v]]>0
@@ -185,7 +194,7 @@ def update_residual_graph(g_residual, g, flow)
             g_new.add_edge_cap_cost(u, v, uv, 0) if uv != 0
             g_new.add_edge_cap_cost(v, u, vu, 0) if vu != 0
         else
-            g_new.add_edge_cap_cost(u, v, g.capacity[[u,v]], g_residual.weight[[u,v]])
+            g_new.add_edge_cap_cost(u, v, g.capacity[[u,v]], g.weight[[u,v]] + potential[u] - potential[v])
         end
     end
     g_new
@@ -501,6 +510,21 @@ if __FILE__ == $0
     # g.add_edge_weight_undirected("e","f", 10)
     # p mst_prim(g, "a")
     
+    # g = MinCostFlowGraph.new
+    # g.add_edge_cap_cost(1, 2, 7, 1)
+    # g.add_edge_cap_cost(1, 3, 7, 5)
+    # g.add_edge_cap_cost(2, 3, 2, -2)
+    # g.add_edge_cap_cost(2, 4, 3, 8)
+    # g.add_edge_cap_cost(3, 4, 3, -3)
+    # g.add_edge_cap_cost(3, 5, 2, 4)
+    # g.add_supply(1, 5)
+    # g.add_demand(4, 3)
+    # g.add_demand(5, 2)
+    # p min_cost_flow g
+    
+    #<MinCostFlowResult:@flow={[1, 2]=>2, [1, 3]=>3, [2, 3]=>2, [2, 4]=>0, [3, 4]=>3, [3, 5]=>2}, 
+    # @value=5, @total_cost=12>
+        
     g = MinCostFlowGraph.new
     g.add_edge_cap_cost(1, 3, 1, 1)
     g.add_edge_cap_cost(1, 4, 1, 2)
@@ -511,6 +535,8 @@ if __FILE__ == $0
     g.add_demand(3, 2)
     g.add_demand(4, 2)
     p min_cost_flow g
+    
+    #<MinCostFlowResult: @flow={[1, 3]=>1, [1, 4]=>1, [2, 3]=>1, [2, 4]=>1}, @value=4, @total_cost=6>
     
     # g = Graph.new
     # g.add_edge_weight("s", "t", 10)
