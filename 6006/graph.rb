@@ -138,7 +138,7 @@ class MinCostFlowGraph < Graph
 end
 
 def min_cost_flow g
-    #Successive Shortest Path
+    #Successive Shortest Path, O(VEBlog(V)), B is the largest supply of any node.
     s, t = "source", "sink"
     g.supply.each do |node, supply|
         if supply>0
@@ -153,7 +153,7 @@ def min_cost_flow g
     end
     
     potential = bellman_ford(g, s).dist
-    g_residual = reduce_cost g, potential
+    g_residual = update_residual_graph g, potential
     while true
         dijk = dijkstra g_residual, s
         break if dijk.parent[t].nil?
@@ -185,10 +185,10 @@ def path_capacity_2(bfs_res, t, g)
     path_cap
 end
 
-def update_residual_graph(g, potential, flow)
+def update_residual_graph(g, potential, flow=nil)
     g_new = MinCostFlowGraph.new
     g.edges.each do |u, v|
-        if flow[[u,v]]>0
+        if flow and flow[[u,v]]>0
             uv = g.capacity[[u, v]] - flow[[u,v]]
             vu = flow[[u,v]]
             g_new.add_edge_cap_cost(u, v, uv, 0) if uv != 0
@@ -200,15 +200,8 @@ def update_residual_graph(g, potential, flow)
     g_new
 end
 
-def reduce_cost g, potential
-    g_residual = MinCostFlowGraph.new
-    g.edges.each do |u, v|
-        g_residual.add_edge_cap_cost u, v, g.capacity[[u,v]], g.weight[[u,v]] + potential[u] - potential[v]
-    end
-    g_residual
-end
-
 def ford_Fulkerson g, s, t
+    # O(VE^2)
     res = MaxFlowResult.new
     g.edges.each do |e|
         res.flow[e] = 0
@@ -304,7 +297,7 @@ class ShortestPathResult
 end
 
 def dijkstra(graph, source)
-    # O(Elog(V)
+    # O(Elog(V))
     res = ShortestPathResult.new
     graph.each_vertex do |v|
         res.dist[v] = Float::INFINITY
@@ -513,17 +506,17 @@ if __FILE__ == $0
     # g.add_edge_weight_undirected("e","f", 10)
     # p mst_prim(g, "a")
     
-    # g = MinCostFlowGraph.new
-    # g.add_edge_cap_cost(1, 2, 7, 1)
-    # g.add_edge_cap_cost(1, 3, 7, 5)
-    # g.add_edge_cap_cost(2, 3, 2, -2)
-    # g.add_edge_cap_cost(2, 4, 3, 8)
-    # g.add_edge_cap_cost(3, 4, 3, -3)
-    # g.add_edge_cap_cost(3, 5, 2, 4)
-    # g.add_supply(1, 5)
-    # g.add_demand(4, 3)
-    # g.add_demand(5, 2)
-    # p min_cost_flow g
+    g = MinCostFlowGraph.new
+    g.add_edge_cap_cost(1, 2, 7, 1)
+    g.add_edge_cap_cost(1, 3, 7, 5)
+    g.add_edge_cap_cost(2, 3, 2, -2)
+    g.add_edge_cap_cost(2, 4, 3, 8)
+    g.add_edge_cap_cost(3, 4, 3, -3)
+    g.add_edge_cap_cost(3, 5, 2, 4)
+    g.add_supply(1, 5)
+    g.add_demand(4, 3)
+    g.add_demand(5, 2)
+    p min_cost_flow g
     
     #<MinCostFlowResult:@flow={[1, 2]=>2, [1, 3]=>3, [2, 3]=>2, [2, 4]=>0, [3, 4]=>3, [3, 5]=>2}, 
     # @value=5, @total_cost=12>
