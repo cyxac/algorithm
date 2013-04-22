@@ -304,6 +304,7 @@ class ShortestPathResult
 end
 
 def dijkstra(graph, source)
+    # O(Elog(V)
     res = ShortestPathResult.new
     graph.each_vertex do |v|
         res.dist[v] = Float::INFINITY
@@ -331,6 +332,7 @@ def dijkstra(graph, source)
 end
 
 def bellman_ford(graph, source)
+    # O(VE)
     res = ShortestPathResult.new
     graph.each_vertex do |v|
         res.dist[v] = Float::INFINITY
@@ -364,6 +366,7 @@ class MSTResult
 end
 
 def mst_prim(g, s)
+    # O(Elog(V))
     res = MSTResult.new
     dist = {}
     parent = {}
