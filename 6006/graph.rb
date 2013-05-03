@@ -158,7 +158,7 @@ def min_cost_flow g
         dijk = dijkstra g_residual, s
         break if dijk.parent[t].nil?
         
-        path_cap = path_capacity_2(dijk, t, g_residual)
+        path_cap = path_capacity(dijk, t, g_residual) { |g, from, to| g.capacity[[from, to]] }
         res.augment_flow(dijk, t, g, path_cap)
         g_residual = update_residual_graph(g, dijk.dist, res.flow)
     end
@@ -172,17 +172,6 @@ def min_cost_flow g
     end
     
     res
-end
-
-def path_capacity_2(bfs_res, t, g)
-    where = t
-    path_cap = Float::INFINITY
-    while bfs_res.parent[where]
-        parent = bfs_res.parent[where]
-        path_cap = [path_cap, g.capacity[[parent, where]]].min
-        where = parent
-    end
-    path_cap
 end
 
 def update_residual_graph(g, potential, flow=nil)
@@ -215,7 +204,7 @@ def ford_Fulkerson g, s, t
             return res
         end
         
-        path_cap = path_capacity(bfs_res, t, g_residual)
+        path_cap = path_capacity(bfs_res, t, g_residual) { |g, from, to| g.weight[[from, to]] }
         res.augment_flow(bfs_res, t, g, path_cap)
 
         g_residual = create_residual_graph(g, res.flow)
@@ -227,7 +216,7 @@ def path_capacity(bfs_res, t, g)
     path_cap = Float::INFINITY
     while bfs_res.parent[where]
         parent = bfs_res.parent[where]
-        path_cap = [path_cap, g.weight[[parent, where]]].min
+        path_cap = [path_cap, yield(g, parent, where)].min
         where = parent
     end
     path_cap
@@ -475,19 +464,19 @@ class PriorityQueue
 end
 
 if __FILE__ == $0
-    # g = Graph.new
-    # g.add_edge_weight(1, 2, 16)
-    # g.add_edge_weight(1, 3, 13)
-    # g.add_edge_weight(3, 2, 4)
-    # g.add_edge_weight(2, 4, 12)
-    # g.add_edge_weight(4, 3, 9)
-    # g.add_edge_weight(3, 5, 14)
-    # g.add_edge_weight(5, 4, 7)
-    # g.add_edge_weight(4, 6, 20)
-    # g.add_edge_weight(5, 6, 4)
-    # p ford_Fulkerson(g, 1, 6)
-    # # <@flow={[1, 2]=>12, [1, 3]=>11, [3, 2]=>0, [2, 4]=>12, [4, 3]=>0, [3, 5]=>11, [5, 4]=>7, [4, 6]=>19, [5, 6]=>4}, 
-    # # @value=23>
+    g = Graph.new
+    g.add_edge_weight(1, 2, 16)
+    g.add_edge_weight(1, 3, 13)
+    g.add_edge_weight(3, 2, 4)
+    g.add_edge_weight(2, 4, 12)
+    g.add_edge_weight(4, 3, 9)
+    g.add_edge_weight(3, 5, 14)
+    g.add_edge_weight(5, 4, 7)
+    g.add_edge_weight(4, 6, 20)
+    g.add_edge_weight(5, 6, 4)
+    p ford_Fulkerson(g, 1, 6)
+    # <@flow={[1, 2]=>12, [1, 3]=>11, [3, 2]=>0, [2, 4]=>12, [4, 3]=>0, [3, 5]=>11, [5, 4]=>7, [4, 6]=>19, [5, 6]=>4}, 
+    # @value=23>
     
     # g = Graph.new
     # g.add_edge_weight_undirected("a","b", 4)
