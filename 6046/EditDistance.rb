@@ -67,4 +67,4 @@ def read_file file_name
     [n1, s1, n2, s2]
 end
 
-edit_distance *(read_file "input1.txt")
+edit_distance(*read_file("input1.txt"))
