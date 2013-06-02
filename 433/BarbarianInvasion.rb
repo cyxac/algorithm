@@ -1,4 +1,5 @@
 require_relative "../6006/graph"
+include Graphs
 
 def minimal_detachment country_map, detachment_size
     detachment_size = Hash[("A".."Z").zip(detachment_size)]
