@@ -1,469 +1,477 @@
 require 'set'
 
-class Graph
-    attr_accessor :adj, :vertices, :edges, :weight
-    def initialize
-        @adj = Hash.new []
-        @vertices = Set.new
-        @edges = Set.new
-        @weight = {}
-    end
-    
-    def add_edge(u, v)
-        if not @adj.has_key? u
-            @adj[u] = []
-        end
-        if not @edges.include? [u, v]
-            @adj[u] << v
-            @edges << [u, v]
-            @vertices << u
-            @vertices << v
-        end
-    end
-    
-    def add_edge_weight(u, v, w)
-        add_edge u, v
-        @weight[[u, v]] = w
-    end
-    
-    def add_edge_undirected(u, v)
-        add_edge(u, v)
-        add_edge(v, u)
-    end
-    
-    def add_edge_weight_undirected(u, v, w)
-        add_edge_undirected(u, v)
-        @weight[[u,v]] = w
-        @weight[[v,u]] = w
-    end
-    
-    def each_vertex &block
-        @vertices.each &block
-    end
-end
-
-class BFSResult
-    attr_accessor :parent, :level
-    def initialize
-        @parent = {}
-        @level = {}
-    end
-end
-
-def bfs(g, s, t)
-    res = BFSResult.new
-    res.level[s] = 0
-    res.parent[s] = nil
-    queue = [s]
-    while not queue.empty?
-        v = queue.shift
-        g.adj[v].each do |neighbor|
-            if not res.level.has_key? neighbor
-                queue << neighbor
-                res.level[neighbor] = res.level[v]+1
-                res.parent[neighbor] = v
-                return res if s == t
-            end
-        end
-    end
-    return res
-end
-
-class MaxFlowResult
-    attr_accessor :flow, :value
-    def initialize
-        @flow = {}
-        @value = 0
-    end
-    
-    def augment_flow(path, t, g, path_cap)
-        where = t
-        @value += path_cap
-        while path.parent[where]
-            parent = path.parent[where]
-            if g.edges.include? [parent, where]
-                @flow[[parent, where]] += path_cap
-            else
-                @flow[[where, parent]] -= path_cap
-            end
-            where = parent
-        end
-    end
-end
-
-class MinCostFlowResult < MaxFlowResult
-    attr_accessor :total_cost
-    def initialize
-        super
-        @total_cost = 0
-    end
-    
-    def augment_flow(path, t, g, path_cap)
-        where = t
-        @value += path_cap
-        while path.parent[where]
-            parent = path.parent[where]
-            if g.edges.include? [parent, where]
-                @flow[[parent, where]] += path_cap
-                @total_cost += path_cap * g.weight[[parent, where]]
-            else
-                @flow[[where, parent]] -= path_cap
-                @total_cost -= path_cap * g.weight[[where, parent]]
-            end
-            where = parent
-        end
-    end
-end
-
-class MinCostFlowGraph < Graph
-    attr_accessor :capacity, :supply
-    def initialize
-        super
-        @capacity = {}
-        @supply = Hash.new(0)
-    end
-    
-    def add_edge_cap_cost(u, v, cap, cost)
-        add_edge_weight u, v, cost
-        @capacity[[u, v]] = cap
-    end
-    
-    def add_supply(node, amount)
-        @supply[node] = amount
-    end
-    
-    def add_demand(node, amount)
-        add_supply(node, -amount)
-    end
-end
-
-def min_cost_flow g
-    #Successive Shortest Path, O(VEBlog(V)), B is the largest supply of any node.
-    s, t = "source", "sink"
-    g.supply.each do |node, supply|
-        if supply>0
-            g.add_edge_cap_cost(s, node, supply, 0)
-        elsif supply<0
-            g.add_edge_cap_cost(node, t, -supply, 0)
-        end
-    end
-    res = MinCostFlowResult.new
-    g.edges.each do |e|
-        res.flow[e] = 0
-    end
-    
-    potential = bellman_ford(g, s).dist
-    g_residual = update_residual_graph g, potential
-    while true
-        dijk = dijkstra g_residual, s
-        break if dijk.parent[t].nil?
-        
-        path_cap = path_capacity(dijk, t, g_residual) { |g, from, to| g.capacity[[from, to]] }
-        res.augment_flow(dijk, t, g, path_cap)
-        g_residual = update_residual_graph(g, dijk.dist, res.flow)
-    end
-    
-    g.supply.each do |node, supply|
-        if supply>0
-            res.flow.delete [s, node]
-        elsif supply<0
-            res.flow.delete [node, t]
-        end
-    end
-    
-    res
-end
-
-def update_residual_graph(g, potential, flow=nil)
-    g_new = MinCostFlowGraph.new
-    g.edges.each do |u, v|
-        if flow and flow[[u,v]]>0
-            uv = g.capacity[[u, v]] - flow[[u,v]]
-            vu = flow[[u,v]]
-            g_new.add_edge_cap_cost(u, v, uv, 0) if uv != 0
-            g_new.add_edge_cap_cost(v, u, vu, 0) if vu != 0
-        else
-            g_new.add_edge_cap_cost(u, v, g.capacity[[u,v]], g.weight[[u,v]] + potential[u] - potential[v])
-        end
-    end
-    g_new
-end
-
-def ford_Fulkerson g, s, t
-    # O(VE^2)
-    res = MaxFlowResult.new
-    g.edges.each do |e|
-        res.flow[e] = 0
-    end
-    
-    g_residual = g
-    
-    while true
-        bfs_res = bfs g_residual, s, t
-        if bfs_res.parent[t].nil?
-            return res
+module Graphs
+    class Graph
+        attr_accessor :adj, :vertices, :edges, :weight
+        def initialize
+            @adj = Hash.new []
+            @vertices = Set.new
+            @edges = Set.new
+            @weight = {}
         end
         
-        path_cap = path_capacity(bfs_res, t, g_residual) { |g, from, to| g.weight[[from, to]] }
-        res.augment_flow(bfs_res, t, g, path_cap)
-
-        g_residual = create_residual_graph(g, res.flow)
-    end
-end
-
-def path_capacity(bfs_res, t, g)
-    where = t
-    path_cap = Float::INFINITY
-    while bfs_res.parent[where]
-        parent = bfs_res.parent[where]
-        path_cap = [path_cap, yield(g, parent, where)].min
-        where = parent
-    end
-    path_cap
-end
-
-def create_residual_graph(g, flow)
-    g_residual = Graph.new
-    g.edges.each do |u, v|
-        uv = g.weight[[u, v]] - flow[[u,v]]
-        vu = flow[[u,v]]
-        g_residual.add_edge_weight(u, v, uv) if uv != 0
-        g_residual.add_edge_weight(v, u, vu) if vu != 0
-    end
-    g_residual
-end
-
-class DFSResult
-    attr_accessor :parent, :start_time, :finish_time, :edge_type, :order, :t
-    def initialize
-        @parent = {}
-        @start_time = {}
-        @finish_time = {}
-        @edge_type = {}
-        @order = []
-        @t = 0
-    end
-end
-
-def dfs_visit(v, g, result, parent = nil, predicate = Default_predicate)
-    return v if predicate.call(v)
-    result.parent[v] = parent
-    result.t += 1
-    result.start_time[v] = result.t
-    result.edge_type[[parent, v]] = "tree" if not parent.nil?
-    g.adj[v].each do |neighbor|
-        if not result.parent.has_key? neighbor
-            dfs_visit(neighbor, g, result, v, predicate)
-        elsif not result.finish_time.has_key? neighbor
-            result.edge_type[[v, neighbor]] = "back"
-        elsif result.start_time[v] < result.start_time[neighbor]
-            result.edge_type[[v, neighbor]] = "forward"
-        else
-            result.edge_type[[v, neighbor]] = "cross"
+        def add_edge(u, v)
+            if not @adj.has_key? u
+                @adj[u] = []
+            end
+            if not @edges.include? [u, v]
+                @adj[u] << v
+                @edges << [u, v]
+                @vertices << u
+                @vertices << v
+            end
+        end
+        
+        def add_edge_weight(u, v, w)
+            add_edge u, v
+            @weight[[u, v]] = w
+        end
+        
+        def add_edge_undirected(u, v)
+            add_edge(u, v)
+            add_edge(v, u)
+        end
+        
+        def add_edge_weight_undirected(u, v, w)
+            add_edge_undirected(u, v)
+            @weight[[u,v]] = w
+            @weight[[v,u]] = w
+        end
+        
+        def each_vertex &block
+            @vertices.each(&block)
         end
     end
-    result.t += 1
-    result.finish_time[v] = result.t
-    result.order << v
-end
 
-def dfs(g, predicate = Default_predicate)
-    result = DFSResult.new
-    g.each_vertex do |v|
-        if not result.parent.has_key? v
-            dfs_visit(v, g, result, nil, predicate)
+    class BFSResult
+        attr_accessor :parent, :level
+        def initialize
+            @parent = {}
+            @level = {}
         end
     end
-    result
-end
 
-class ShortestPathResult
-    attr_accessor :dist, :parent
-    def initialize
-        @dist = {}
-        @parent = {}
-    end
-end
-
-def dijkstra(graph, source)
-    # O(Elog(V))
-    res = ShortestPathResult.new
-    graph.each_vertex do |v|
-        res.dist[v] = Float::INFINITY
-        res.parent[v] = nil
-    end
-    res.dist[source] = 0
-    q = PriorityQueue.new
-    q.insert([0,source])
-    while not q.empty?
-        u = q.extract_min[1]
-        graph.adj[u].each do |v|
-            new_dist = res.dist[u] + graph.weight[[u,v]]
-            if new_dist < res.dist[v]
-                if res.dist[v] == Float::INFINITY
-                    q.insert([new_dist, v])
-                else
-                    q.decrease_key([res.dist[v], v], [new_dist, v])
+    def bfs(g, s, t)
+        res = BFSResult.new
+        res.level[s] = 0
+        res.parent[s] = nil
+        queue = [s]
+        while not queue.empty?
+            v = queue.shift
+            g.adj[v].each do |neighbor|
+                if not res.level.has_key? neighbor
+                    queue << neighbor
+                    res.level[neighbor] = res.level[v]+1
+                    res.parent[neighbor] = v
+                    return res if s == t
                 end
-                res.dist[v] = new_dist
-                res.parent[v] = u
+            end
+        end
+        return res
+    end
+
+    class MaxFlowResult
+        attr_accessor :flow, :value
+        def initialize
+            @flow = {}
+            @value = 0
+        end
+        
+        def augment_flow(path, t, g, path_cap)
+            where = t
+            @value += path_cap
+            while path.parent[where]
+                parent = path.parent[where]
+                if g.edges.include? [parent, where]
+                    @flow[[parent, where]] += path_cap
+                else
+                    @flow[[where, parent]] -= path_cap
+                end
+                where = parent
             end
         end
     end
-    res
-end
 
-def bellman_ford(graph, source)
-    # O(VE)
-    res = ShortestPathResult.new
-    graph.each_vertex do |v|
-        res.dist[v] = Float::INFINITY
-        res.parent[v] = nil
+    class MinCostFlowResult < MaxFlowResult
+        attr_accessor :total_cost
+        def initialize
+            super
+            @total_cost = 0
+        end
+        
+        def augment_flow(path, t, g, path_cap)
+            where = t
+            @value += path_cap
+            while path.parent[where]
+                parent = path.parent[where]
+                if g.edges.include? [parent, where]
+                    @flow[[parent, where]] += path_cap
+                    @total_cost += path_cap * g.weight[[parent, where]]
+                else
+                    @flow[[where, parent]] -= path_cap
+                    @total_cost -= path_cap * g.weight[[where, parent]]
+                end
+                where = parent
+            end
+        end
     end
-    res.dist[source] = 0
-    
-    (graph.vertices.size-1).times do
+
+    class MinCostFlowGraph < Graph
+        attr_accessor :capacity, :supply
+        def initialize
+            super
+            @capacity = {}
+            @supply = Hash.new(0)
+        end
+        
+        def add_edge_cap_cost(u, v, cap, cost)
+            add_edge_weight u, v, cost
+            @capacity[[u, v]] = cap
+        end
+        
+        def add_supply(node, amount)
+            @supply[node] = amount
+        end
+        
+        def add_demand(node, amount)
+            add_supply(node, -amount)
+        end
+    end
+
+    def min_cost_flow g
+        #Successive Shortest Path, O(VEBlog(V)), B is the largest supply of any node.
+        s, t = "source", "sink"
+        g.supply.each do |node, supply|
+            if supply>0
+                g.add_edge_cap_cost(s, node, supply, 0)
+            elsif supply<0
+                g.add_edge_cap_cost(node, t, -supply, 0)
+            end
+        end
+        res = MinCostFlowResult.new
+        g.edges.each do |e|
+            res.flow[e] = 0
+        end
+        
+        potential = bellman_ford(g, s).dist
+        g_residual = update_residual_graph g, potential
+        while true
+            dijk = dijkstra g_residual, s
+            break if dijk.parent[t].nil?
+            
+            path_cap = path_capacity(dijk, t, g_residual) { |_g, from, to| _g.capacity[[from, to]] }
+            res.augment_flow(dijk, t, g, path_cap)
+            g_residual = update_residual_graph(g, dijk.dist, res.flow)
+        end
+        
+        g.supply.each do |node, supply|
+            if supply>0
+                res.flow.delete [s, node]
+            elsif supply<0
+                res.flow.delete [node, t]
+            end
+        end
+        
+        res
+    end
+
+    def update_residual_graph(g, potential, flow=nil)
+        g_new = MinCostFlowGraph.new
+        g.edges.each do |u, v|
+            if flow and flow[[u,v]]>0
+                uv = g.capacity[[u, v]] - flow[[u,v]]
+                vu = flow[[u,v]]
+                g_new.add_edge_cap_cost(u, v, uv, 0) if uv != 0
+                g_new.add_edge_cap_cost(v, u, vu, 0) if vu != 0
+            else
+                g_new.add_edge_cap_cost(u, v, g.capacity[[u,v]], g.weight[[u,v]] + potential[u] - potential[v])
+            end
+        end
+        g_new
+    end
+
+    def ford_Fulkerson g, s, t
+        # O(VE^2)
+        res = MaxFlowResult.new
+        g.edges.each do |e|
+            res.flow[e] = 0
+        end
+        
+        g_residual = g
+        
+        while true
+            bfs_res = bfs g_residual, s, t
+            if bfs_res.parent[t].nil?
+                return res
+            end
+            
+            path_cap = path_capacity(bfs_res, t, g_residual)
+            res.augment_flow(bfs_res, t, g, path_cap)
+
+            g_residual = create_residual_graph(g, res.flow)
+        end
+    end
+
+    def path_capacity(bfs_res, t, g, &b)
+        where = t
+        path_cap = Float::INFINITY
+        while bfs_res.parent[where]
+            parent = bfs_res.parent[where]
+            if b
+                path_cap = [path_cap, yield(g, parent, where)].min
+            else
+                path_cap = [path_cap, g.weight[[parent, where]]].min    
+            end
+            
+            where = parent
+        end
+        path_cap
+    end
+
+    def create_residual_graph(g, flow)
+        g_residual = Graph.new
+        g.edges.each do |u, v|
+            uv = g.weight[[u, v]] - flow[[u,v]]
+            vu = flow[[u,v]]
+            g_residual.add_edge_weight(u, v, uv) if uv != 0
+            g_residual.add_edge_weight(v, u, vu) if vu != 0
+        end
+        g_residual
+    end
+
+    class DFSResult
+        attr_accessor :parent, :start_time, :finish_time, :edge_type, :order, :t
+        def initialize
+            @parent = {}
+            @start_time = {}
+            @finish_time = {}
+            @edge_type = {}
+            @order = []
+            @t = 0
+        end
+    end
+
+    def dfs_visit(v, g, result, parent = nil, predicate = Default_predicate)
+        return v if predicate.call(v)
+        result.parent[v] = parent
+        result.t += 1
+        result.start_time[v] = result.t
+        result.edge_type[[parent, v]] = "tree" if not parent.nil?
+        g.adj[v].each do |neighbor|
+            if not result.parent.has_key? neighbor
+                dfs_visit(neighbor, g, result, v, predicate)
+            elsif not result.finish_time.has_key? neighbor
+                result.edge_type[[v, neighbor]] = "back"
+            elsif result.start_time[v] < result.start_time[neighbor]
+                result.edge_type[[v, neighbor]] = "forward"
+            else
+                result.edge_type[[v, neighbor]] = "cross"
+            end
+        end
+        result.t += 1
+        result.finish_time[v] = result.t
+        result.order << v
+    end
+
+    def dfs(g, predicate = Default_predicate)
+        result = DFSResult.new
+        g.each_vertex do |v|
+            if not result.parent.has_key? v
+                dfs_visit(v, g, result, nil, predicate)
+            end
+        end
+        result
+    end
+
+    class ShortestPathResult
+        attr_accessor :dist, :parent
+        def initialize
+            @dist = {}
+            @parent = {}
+        end
+    end
+
+    def dijkstra(graph, source)
+        # O(Elog(V))
+        res = ShortestPathResult.new
+        graph.each_vertex do |v|
+            res.dist[v] = Float::INFINITY
+            res.parent[v] = nil
+        end
+        res.dist[source] = 0
+        q = PriorityQueue.new
+        q.insert([0,source])
+        while not q.empty?
+            u = q.extract_min[1]
+            graph.adj[u].each do |v|
+                new_dist = res.dist[u] + graph.weight[[u,v]]
+                if new_dist < res.dist[v]
+                    if res.dist[v] == Float::INFINITY
+                        q.insert([new_dist, v])
+                    else
+                        q.decrease_key([res.dist[v], v], [new_dist, v])
+                    end
+                    res.dist[v] = new_dist
+                    res.parent[v] = u
+                end
+            end
+        end
+        res
+    end
+
+    def bellman_ford(graph, source)
+        # O(VE)
+        res = ShortestPathResult.new
+        graph.each_vertex do |v|
+            res.dist[v] = Float::INFINITY
+            res.parent[v] = nil
+        end
+        res.dist[source] = 0
+        
+        (graph.vertices.size-1).times do
+            graph.edges.each do |u, v|
+                if res.dist[v] > res.dist[u] + graph.weight[[u, v]]
+                    res.dist[v] = res.dist[u] + graph.weight[[u, v]]
+                    res.parent[v] = u
+                end
+            end
+        end
+        
         graph.edges.each do |u, v|
             if res.dist[v] > res.dist[u] + graph.weight[[u, v]]
-                res.dist[v] = res.dist[u] + graph.weight[[u, v]]
-                res.parent[v] = u
+                return false
             end
         end
+        res
     end
-    
-    graph.edges.each do |u, v|
-        if res.dist[v] > res.dist[u] + graph.weight[[u, v]]
-            return false
+
+    class MSTResult
+        attr_accessor :parent, :total
+        def initialize
+            @parent = {}
+            @total = 0
         end
     end
-    res
-end
 
-class MSTResult
-    attr_accessor :parent, :total
-    def initialize
-        @parent = {}
-        @total = 0
-    end
-end
-
-def mst_prim(g, s)
-    # O(Elog(V))
-    res = MSTResult.new
-    dist = {}
-    parent = {}
-    g.each_vertex do |v|
-        dist[v] = Float::INFINITY
-        parent[v] = nil
-    end
-    dist[s] = 0
-    q = PriorityQueue.new
-    q.insert([0, s])
-    while not q.empty?
-        u = q.extract_min[1]
-        res.parent[u] = parent[u]
-        res.total += dist[u]
-        g.adj[u].each do |v|
-            if not res.parent.has_key?(v) and g.weight[[u,v]] < dist[v]
-                if dist[v] == Float::INFINITY
-                    q.insert([g.weight[[u,v]], v])
-                else
-                    q.decrease_key([dist[v], v], [g.weight[[u,v]], v])
+    def mst_prim(g, s)
+        # O(Elog(V))
+        res = MSTResult.new
+        dist = {}
+        parent = {}
+        g.each_vertex do |v|
+            dist[v] = Float::INFINITY
+            parent[v] = nil
+        end
+        dist[s] = 0
+        q = PriorityQueue.new
+        q.insert([0, s])
+        while not q.empty?
+            u = q.extract_min[1]
+            res.parent[u] = parent[u]
+            res.total += dist[u]
+            g.adj[u].each do |v|
+                if not res.parent.has_key?(v) and g.weight[[u,v]] < dist[v]
+                    if dist[v] == Float::INFINITY
+                        q.insert([g.weight[[u,v]], v])
+                    else
+                        q.decrease_key([dist[v], v], [g.weight[[u,v]], v])
+                    end
+                    dist[v] = g.weight[[u,v]]
+                    parent[v] = u
                 end
-                dist[v] = g.weight[[u,v]]
-                parent[v] = u
             end
         end
+        res
     end
-    res
+
+    class PriorityQueue
+        def initialize
+            @heap = [nil]
+            @key_index = {}
+        end
+        
+        def empty?
+            size() == 0
+        end
+        
+        def size
+            @heap.size - 1
+        end
+        
+        def insert(key)
+            @heap << key
+            @key_index[key] = size()
+            decrease_key_by_index(size(), key)
+        end
+        
+        def decrease_key(old, new)
+            if old[1] != new [1]
+                raise "vertex does not match"
+            end
+            index = @key_index[old]
+            if index
+                decrease_key_by_index(index, new)
+            end
+            @key_index.delete old
+        end
+        
+        def decrease_key_by_index(i, key)
+            if (key[0] <=> @heap[i][0]) > 0
+                raise "new key is larger than current key"
+            end
+            @heap[i] = key
+            while i > 1
+                parent = i / 2
+                if (@heap[parent][0] <=> key[0]) > 0
+                    swap i, parent
+                    i = parent
+                else
+                    break
+                end
+            end
+        end
+        
+        def swap i, j
+            @heap[i], @heap[j] = @heap[j], @heap[i]
+            @key_index[@heap[i]], @key_index[@heap[j]] = i, j
+        end
+        
+        def extract_min
+            if size() < 1
+                return nil
+            end
+            swap(1, size())
+            min = @heap.pop()
+            @key_index.delete min
+            min_heapify(1)
+            return min
+        end
+        
+        def min_heapify(i)
+            l = 2 * i
+            r = 2 * i + 1
+            smallest = i
+            if l <= size() and (@heap[l] <=> @heap[i]) < 0
+                smallest = l
+            end
+            if r <= size() and (@heap[r] <=> @heap[smallest]) < 0
+                smallest = r
+            end
+            if smallest != i
+                swap(i, smallest)
+                min_heapify(smallest)
+            end
+        end
+        
+        def heap
+            @heap
+        end
+    end    
 end
 
-class PriorityQueue
-    def initialize
-        @heap = [nil]
-        @key_index = {}
-    end
-    
-    def empty?
-        size() == 0
-    end
-    
-    def size
-        @heap.size - 1
-    end
-    
-    def insert(key)
-        @heap << key
-        @key_index[key] = size()
-        decrease_key_by_index(size(), key)
-    end
-    
-    def decrease_key(old, new)
-        if old[1] != new [1]
-            raise "vertex does not match"
-        end
-        index = @key_index[old]
-        if index
-            decrease_key_by_index(index, new)
-        end
-        @key_index.delete old
-    end
-    
-    def decrease_key_by_index(i, key)
-        if (key[0] <=> @heap[i][0]) > 0
-            raise "new key is larger than current key"
-        end
-        @heap[i] = key
-        while i > 1
-            parent = i / 2
-            if (@heap[parent][0] <=> key[0]) > 0
-                swap i, parent
-                i = parent
-            else
-                break
-            end
-        end
-    end
-    
-    def swap i, j
-        @heap[i], @heap[j] = @heap[j], @heap[i]
-        @key_index[@heap[i]], @key_index[@heap[j]] = i, j
-    end
-    
-    def extract_min
-        """Removes and returns the minimum key."""
-        if size() < 1
-            return nil
-        end
-        swap(1, size())
-        min = @heap.pop()
-        @key_index.delete min
-        min_heapify(1)
-        return min
-    end
-    
-    def min_heapify(i)
-        l = 2 * i
-        r = 2 * i + 1
-        smallest = i
-        if l <= size() and (@heap[l] <=> @heap[i]) < 0
-            smallest = l
-        end
-        if r <= size() and (@heap[r] <=> @heap[smallest]) < 0
-            smallest = r
-        end
-        if smallest != i
-            swap(i, smallest)
-            min_heapify(smallest)
-        end
-    end
-    
-    def heap
-        @heap
-    end
-end
 
 if __FILE__ == $0
+    include Graphs
     g = Graph.new
     g.add_edge_weight(1, 2, 16)
     g.add_edge_weight(1, 3, 13)

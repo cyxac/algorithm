@@ -1,4 +1,5 @@
 require_relative "../6006/graph"
+include Graphs
 
 def determineCost n, roads
     roads = roads.join.split.map do |str|

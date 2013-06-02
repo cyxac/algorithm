@@ -1,4 +1,5 @@
 require_relative "../6006/graph"
+include Graphs
 
 def more_classes(classesTaken, requirements)
     g = Graph.new
@@ -29,8 +30,7 @@ def more_classes(classesTaken, requirements)
         next if bfs_res.parent[sink].nil?
         
         path_cap = path_capacity(bfs_res, sink, g_residual)
-        res.value += path_cap
-        augment_flow(res.flow, bfs_res, sink, g, path_cap)
+        res.augment_flow(bfs_res, sink, g, path_cap)
         
         g_residual = create_residual_graph(g, res.flow)
     end
@@ -43,8 +43,7 @@ def more_classes(classesTaken, requirements)
         
         output << c
         path_cap = path_capacity(bfs_res, sink, g_residual)
-        res.value += path_cap
-        augment_flow(res.flow, bfs_res, sink, g, path_cap)
+        res.augment_flow(bfs_res, sink, g, path_cap)
         
         g_residual = create_residual_graph(g, res.flow)
     end
