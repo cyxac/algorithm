@@ -191,7 +191,7 @@ module Graphs
     end
 
     def ford_Fulkerson g, s, t
-        # O(VE^2)
+        # O(VE^2) for max flow
         res = MaxFlowResult.new
         g.edges.each do |e|
             res.flow[e] = 0
@@ -292,7 +292,7 @@ module Graphs
     end
 
     def dijkstra(graph, source)
-        # O(Elog(V))
+        # O(Elog(V)), no negative edges.
         res = ShortestPathResult.new
         graph.each_vertex do |v|
             res.dist[v] = Float::INFINITY
@@ -320,7 +320,8 @@ module Graphs
     end
 
     def bellman_ford(graph, source)
-        # O(VE)
+        # O(VE), can handle negative edges, return false if negative cycle
+        # can be reached.
         res = ShortestPathResult.new
         graph.each_vertex do |v|
             res.dist[v] = Float::INFINITY
