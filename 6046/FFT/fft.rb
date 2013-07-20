@@ -18,7 +18,7 @@ end
 
 def inverse_FFT a
   y = recursive_FFT a, true
-  y = y.map {|elem| elem/a.size} 
+  y.map {|elem| elem/a.size} 
 end
 
 def multiply a, b
