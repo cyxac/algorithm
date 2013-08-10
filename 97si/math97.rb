@@ -49,12 +49,6 @@ if __FILE__ == $0
   p 5.choose(3)
   p 60.choose(30)
   
-  p pow 5, 2
-  p pow 5, 0
-  p pow 5, 10
-  
-  Test.foo
-
   p Vector[1, 0].rotate(PI/2)
 
   p [1,0].rotate(PI/2)
