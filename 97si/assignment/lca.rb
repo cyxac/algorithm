@@ -13,7 +13,7 @@ def solve input
   end
 end
 
-def query x, y, anc, depth
+def query a, b, anc, depth
   same_depth = ->(x, y) {
     if depth[x] < depth[y]
       k = log2(depth[y]-depth[x]).floor
@@ -25,17 +25,15 @@ def query x, y, anc, depth
       return [x, y]
     end 
   }
-  x, y = same_depth.(x, y)
+  x, y = same_depth.(a, b)
   k = log2(depth.size-1).ceil
-  p anc[x], anc[y]
   loop do
-    # return anc[x][0] if k < 0
-    if anc[x][k].nil? || anc[x][k] == anc[y][k]
+    return x if x == y
+    if k>0 and (anc[x][k].nil? || anc[x][k] == anc[y][k])
       k -=1
     else
       x = anc[x][k] 
       y = anc[y][k]
-      return anc[x][0] if k == 0
     end
   end
 end
@@ -70,7 +68,7 @@ def get_depth root, tree
     end
   }
   visit.(root)
-  return depth
+  depth
 end
 
 input = 
