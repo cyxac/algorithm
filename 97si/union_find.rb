@@ -3,9 +3,7 @@
 class UnionFind
   def initialize nodes=[]
     @parent, @rank = [], []
-    if !nodes.empty?
-      nodes.each { |e| insert e }
-    end
+    nodes.each { |e| insert e } if !nodes.empty?
   end
 
   def insert x
@@ -15,18 +13,17 @@ class UnionFind
   alias :<< :insert
 
   def find x
-    @parent[x] == x ? x : find(@parent[x])
+    @parent[x] == x ? x : @parent[x]=find(@parent[x])
   end
 
   def union x, y
-    px = find x
-    py = find y
-    if @rank[px] <= @rank[py]
+    px, py = find(x), find(y)
+    if @rank[px] < @rank[py]
       @parent[px] = py
     else
       @parent[py] = px
     end
-    @rank[py] += 1 if @rank[px] == @rank[py]
+    @rank[px] += 1 if @rank[px] == @rank[py]
   end
 end
 
@@ -38,7 +35,7 @@ if __FILE__ == $0
   p set.find 1
   p set.find 2
   set.union 4, 3
-  set.union 1, 4
+  set.union 4, 1
   p set.find 1
   p set.find 2
   p set.find 3
