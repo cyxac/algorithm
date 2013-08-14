@@ -4,25 +4,22 @@ INF = Float::INFINITY
 
 def solve input_str
   @input = StringIO.new input_str
-  v, m = readline_int @input
-  villages = readline_int(@input).unshift nil
-  dp = [[[0]*(v+1)]*(m+1)]*(v+1)
-  1.upto(v) do |i|
-    1.upto(m) do |j|
-      1.upto(v) do |k|
-        if k <= i
-          dp[i][j][k] = [dp[i-1][j-1][i-1], dp[i-1][j][k]].min
-        elsif k > i
-          sum = (i+1).upto(k-1).reduce(0) do |acc, l|
-            acc + [villages[l]-villages[i], villages[k]-villages[l]].min
-          end
-          dp[i][j][k] = [dp[i-1][j-1][i]+sum, dp[i-1][j][k]].min
-        end
-      end
+  v, p = readline_int @input
+  @villages = readline_int @input
+  dp = Array.new(v) { Array.new(p+1) }
+  v.times {|i| dp[i][1] = min_dist 0, i}
+  2.upto(p) {|j| dp[0][j] = INF }
+  1.upto(v-1) do |i|
+    2.upto(p) do |j|
+      dp[i][j] = 0.upto(i-1).map {|k| dp[k][j-1] + min_dist(k+1, i)}.min
     end
   end
-  p dp[1][1]
-  dp[v][m][v]
+  dp[v-1][p]
+end
+
+def min_dist a, b
+  mid = (a+b)/2
+  a.upto(b).reduce(0) {|acc, i| acc + (@villages[i]-@villages[mid]).abs }
 end
 
 def readline_int input
