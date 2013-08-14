@@ -46,7 +46,7 @@ end
 if __FILE__ == $0
   include Math97
   
-  p 5.choose(3)
+  p 300.choose(30)
   p 60.choose(30)
   
   p Vector[1, 0].rotate(PI/2)
