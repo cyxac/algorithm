@@ -12,15 +12,27 @@ end
 class Graph
   attr_accessor :adj, :vertices, :edges
   def initialize
-    @adj, @vertices, @edges = [], [], []
+    @adj, @vertices, @edges = [], Set.new, []
   end
   
   def add_edge u, v
     @adj[u] ||= []
     @adj[u] << v
-    @vertices[u], @vertices[v] = 1, 1
-    # @vertices << u << v
+    @vertices << u << v
     @edges << [u, v]
+  end
+end
+
+class WeightedGraph < Graph
+  attr_accessor :weight
+  def initialize
+    super
+    @weight = {}
+  end
+  
+  def add_edge u, v, w
+    super u, v
+    @weight[[u,v]] = w
   end
 end
 
