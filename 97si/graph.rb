@@ -21,6 +21,10 @@ class Graph
     @vertices << u << v
     @edges << [u, v]
   end
+  
+  def vertices
+    @vertices.to_a
+  end
 end
 
 class WeightedGraph < Graph
@@ -33,6 +37,20 @@ class WeightedGraph < Graph
   def add_edge u, v, w
     super u, v
     @weight[[u,v]] = w
+  end
+end
+
+class UndirectedGraph < Graph
+  def add_edge u, v
+    super u, v
+    super v, u
+  end
+end
+
+class UndirectedWeightedGraph < WeightedGraph
+  def add_edge u, v, w
+    super u, v, w
+    super v, u, w
   end
 end
 
