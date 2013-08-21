@@ -487,22 +487,22 @@ if __FILE__ == $0
     # <@flow={[1, 2]=>12, [1, 3]=>11, [3, 2]=>0, [2, 4]=>12, [4, 3]=>0, [3, 5]=>11, [5, 4]=>7, [4, 6]=>19, [5, 6]=>4}, 
     # @value=23>
     
-    # g = Graph.new
-    # g.add_edge_weight_undirected("a","b", 4)
-    # g.add_edge_weight_undirected("a","h", 8)
-    # g.add_edge_weight_undirected("b","h", 11)
-    # g.add_edge_weight_undirected("b","c", 8)
-    # g.add_edge_weight_undirected("i","h", 7)
-    # g.add_edge_weight_undirected("g","h", 1)
-    # g.add_edge_weight_undirected("i","c", 2)
-    # g.add_edge_weight_undirected("i","g", 6)
-    # g.add_edge_weight_undirected("c","d", 7)
-    # g.add_edge_weight_undirected("c","f", 4)
-    # g.add_edge_weight_undirected("g","f", 2)
-    # g.add_edge_weight_undirected("d","e", 9)
-    # g.add_edge_weight_undirected("d","f", 14)
-    # g.add_edge_weight_undirected("e","f", 10)
-    # p mst_prim(g, "a")
+    g = Graph.new
+    g.add_edge_weight_undirected("a","b", 4)
+    g.add_edge_weight_undirected("a","h", 8)
+    g.add_edge_weight_undirected("b","h", 11)
+    g.add_edge_weight_undirected("b","c", 8)
+    g.add_edge_weight_undirected("i","h", 7)
+    g.add_edge_weight_undirected("g","h", 1)
+    g.add_edge_weight_undirected("i","c", 2)
+    g.add_edge_weight_undirected("i","g", 6)
+    g.add_edge_weight_undirected("c","d", 7)
+    g.add_edge_weight_undirected("c","f", 4)
+    g.add_edge_weight_undirected("g","f", 2)
+    g.add_edge_weight_undirected("d","e", 9)
+    g.add_edge_weight_undirected("d","f", 14)
+    g.add_edge_weight_undirected("e","f", 10)
+    p mst_prim(g, "a")
     
     g = MinCostFlowGraph.new
     g.add_edge_cap_cost(1, 2, 7, 1)
