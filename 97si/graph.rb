@@ -11,32 +11,33 @@ end
 # Adjacency List with vector
 class Graph
   attr_accessor :adj, :vertices, :edges
-  def initialize
-    @adj, @vertices, @edges = [], Set.new, []
+  def initialize n
+    @adj, @vertices, @edges = [], (1..n), []
   end
   
   def add_edge u, v
     @adj[u] ||= []
     @adj[u] << v
-    @vertices << u << v
     @edges << [u, v]
   end
   
   def vertices
-    @vertices.to_a
+    return @vertices if @vertices.is_a? Array
+    @vertices = @vertices.to_a
   end
 end
 
 class WeightedGraph < Graph
   attr_accessor :weight
-  def initialize
-    super
-    @weight = {}
+  def initialize n
+    super n
+    # @weight = Hash.new {|h,k| h[k] = {} }
+    @weight = Array.new(n+1) { [] }
   end
   
   def add_edge u, v, w
     super u, v
-    @weight[[u,v]] = w
+    @weight[u][v] = w
   end
 end
 
@@ -86,7 +87,7 @@ if __FILE__ == $0
   Benchmark.bm do |x|
     x.report("1 add edges") do
       n.times do
-        g = Graph.new
+        g = Graph.new 5
         g.add_edge 1,2
         g.add_edge 2,3
         g.add_edge 1,3
@@ -111,7 +112,7 @@ if __FILE__ == $0
       end
     end
   end
-  g = Graph.new
+  g = Graph.new 5
   g.add_edge 1,2
   g.add_edge 2,3
   g.add_edge 1,3
