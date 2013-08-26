@@ -1,9 +1,9 @@
-# insert, buble, pop take O(log(n)) time
+# insert, bubble, pop take O(log(n)) time
 # build takes O(n) time
-# buble can't handle duplicate elements yet
+# bubble can't handle duplicate elements yet
 class PriorityQueue
   def initialize array = [], &cmp
-    @heap = array.unshift nil
+    @heap = array.dup.unshift nil
     @index = {}
     @cmp = cmp.nil? ? ->(a, b){ [a, b].min } : cmp
     build @heap
@@ -30,7 +30,7 @@ class PriorityQueue
   def insert(x)
     @heap << x
     @index[x] = size()
-    buble_index size(), x
+    bubble_index size(), x
   end
   alias :<< :insert
 
@@ -38,9 +38,9 @@ class PriorityQueue
     build(@heap + array)
   end
 
-  def buble_index i, x
+  def bubble_index i, x
     if @cmp.(@heap[i], x) != x
-      raise "new element #{x} can't buble up over old element #{@heap[i]}"
+      raise "new element #{x} can't bubble up over old element #{@heap[i]}"
     end
     @heap[i] = x
     @index[x] = i
@@ -51,9 +51,9 @@ class PriorityQueue
   end
 
   # provide a second arg will replace the first arg in the queue
-  def buble x, y=x
+  def bubble x, y=x
     if i = @index[x]
-      buble_index i, y
+      bubble_index i, y
     else
       raise "can't find value #{x}"
     end
@@ -110,7 +110,7 @@ end
 
 if __FILE__ == $0
   q = PriorityQueue.new [9, 8, 7]
-  q.buble 7
+  q.bubble 7
   # q = PriorityQueue.new
   # q << 9
   # q << 8
@@ -133,7 +133,7 @@ if __FILE__ == $0
   # q = PriorityQueue.new([6,3, 7, 8, 434, 66, 88, -19, -20]) {|a, b| [a, b].max}
   # p q.heap
   # p q.index
-  # q.buble(88, 500)
+  # q.bubble(88, 500)
   # p q.heap
   # while p q.pop
   # end
@@ -142,8 +142,8 @@ if __FILE__ == $0
   # q.pop
   # p q.index
   # p q.heap
-  # q.buble 2, 1
+  # q.bubble 2, 1
   # p q.index
   # p q.heap
-  # q.buble 2, 1
+  # q.bubble 2, 1
 end
