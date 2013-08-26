@@ -11,8 +11,8 @@ end
 # Adjacency List with vector
 class Graph
   attr_accessor :adj, :vertices, :edges
-  def initialize n
-    @adj, @vertices, @edges = [], (1..n), []
+  def initialize v_range
+    @adj, @vertices, @edges = [], v_range, []
   end
   
   def add_edge u, v
@@ -29,10 +29,9 @@ end
 
 class WeightedGraph < Graph
   attr_accessor :weight
-  def initialize n
-    super n
-    # @weight = Hash.new {|h,k| h[k] = {} }
-    @weight = Array.new(n+1) { [] }
+  def initialize v_range
+    super v_range
+    @weight = Array.new(v_range.end+1) { [] }
   end
   
   def add_edge u, v, w

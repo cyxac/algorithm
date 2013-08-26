@@ -21,7 +21,7 @@ def bellman_ford g, s
       end
     end
   end
-  
+
   g.edges.each do |u, v|
     if res.dist[v] > res.dist[u] + g.weight[u][v]
       return false
@@ -31,8 +31,8 @@ def bellman_ford g, s
 end
 
 if __FILE__ == $0
-  # CLRS page 625
-  g = WeightedGraph.new 5
+  # CLRS page 652
+  g = WeightedGraph.new 1..5
   g.add_edge 1, 2, 6
   g.add_edge 1, 4, 7
   g.add_edge 2, 3, 5
@@ -44,4 +44,12 @@ if __FILE__ == $0
   g.add_edge 5, 1, 2
   g.add_edge 5, 3, 7
   p bellman_ford g, 1
+
+  # http://poj.org/problem?id=3169
+  g2 = WeightedGraph.new 1..4
+  g2.add_edge 1,3,10
+  g2.add_edge 2,4,20
+  g2.add_edge 3,2,-3
+  p g2.vertices
+  p bellman_ford g2, 1
 end
