@@ -10,9 +10,9 @@ end
 
 # Adjacency List with vector
 class Graph
-  attr_accessor :adj, :vertices, :edges
+  attr_accessor :adj, :vertices, :edges, :v_range
   def initialize v_range
-    @adj, @vertices, @edges = [], v_range, []
+    @adj, @v_range, @edges = [], v_range, []
   end
   
   def add_edge u, v
@@ -23,7 +23,7 @@ class Graph
   
   def vertices
     return @vertices if @vertices.is_a? Array
-    @vertices = @vertices.to_a
+    @vertices = @v_range.to_a
   end
 end
 
