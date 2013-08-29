@@ -5,7 +5,7 @@ require_relative "priority_queue"
 MstResult = Struct.new :edges, :cost
 
 # Elog(E)
-# Since E < V^2, Elog(E) can be stated as Elog(V) as well
+# Since E < V^2, run time can be stated as Elog(V) as well
 def mst_kruskal g, w = g.weight
   res = MstResult.new [], 0
   u_set = UnionFind.new g.vertices
@@ -94,7 +94,7 @@ if __FILE__ == $0
 
   require 'benchmark'
   # require "profile"
-  n = 500
+  n = 5000
   Benchmark.bm do |x|
     x.report('kruskal') { n.times {mst_kruskal g2}}
     x.report('prim') {n.times {mst_prim g2}}
