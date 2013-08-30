@@ -1,5 +1,4 @@
 require 'matrix'
-require 'set'
 
 # O(V^2) storage, use only for dense graph, and V is less than a few thousands
 # A^k is the length-k walk counting matrix for the graph
