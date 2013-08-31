@@ -83,9 +83,9 @@ if __FILE__ == $0
   n = 500000
 
   Benchmark.bm do |x|
-    x.report("1 add edges") do
+    x.report("1 Construct") do
       n.times do
-        g = Graph.new 5
+        g = Graph.new 1..5
         g.add_edge 1,2
         g.add_edge 2,3
         g.add_edge 1,3
@@ -96,7 +96,7 @@ if __FILE__ == $0
         g.add_edge 2,5
       end
     end
-    x.report("2 add edges") do
+    x.report("2 Construct") do
       n.times do
         g = Graph2.new 5, 8
         g.add_edge 1,2
@@ -110,7 +110,7 @@ if __FILE__ == $0
       end
     end
   end
-  g = Graph.new 5
+  g = Graph.new 1..5
   g.add_edge 1,2
   g.add_edge 2,3
   g.add_edge 1,3
