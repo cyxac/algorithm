@@ -1,6 +1,7 @@
 require_relative 'graph'
 
 # O(VE^2) Edmonds-Karp
+# Works on directed graph
 def max_flow g, s, t
   res = MaxFlowResult.new g.v_range
   weighted_graph_dup = ->(inp){
