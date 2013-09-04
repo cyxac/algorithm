@@ -36,7 +36,7 @@ end
 class MaxFlowResult
   attr_accessor :flow, :value
   def initialize v_range
-    @flow = Array.new(v_range.end+1) { Array.new(v_range.end+1){0}}
+    @flow = Array.new(v_range.end+1) { [0]*(v_range.end+1) }
     @value = 0
   end
     
