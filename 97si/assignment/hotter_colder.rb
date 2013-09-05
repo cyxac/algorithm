@@ -1,23 +1,38 @@
 # http://poj.org/problem?id=2540
 
 require 'stringio'
+require 'matrix'
+require 'set'
 
 def solve str
   io = StringIO.new str
-  same = false
+  zero = false
   prev  = [0, 0]
+  planes = [[-1, 0, 0], [0, -1, 0], [0, 1, -10], [1, 0, -10]]
   while line = io.gets
-    line = line.split
-    x, y, hint = line[0].to_f, line[1].to_f, line[2]
-    if same
+    if zero
       puts "0.00"
       next
     end
-    same = true if hint == 'Same'
+    line = line.split
+    x, y, hint = line[0].to_f, line[1].to_f, line[2]
+    if hint == 'Same'
+      zero = true
+      next     
+    end
     dx, dy = x - prev[0], y-prev[1]
-    a = dx/dy
-    b = 1
-    c = -a*x/2-y/2
+    mid_x = prev[0] + dx/2
+    mid_y = prev[1] + dy/2
+    if dy == 0
+      b = 0
+      a = 1.0
+      c = -mid_x
+    else
+      a = dx/dy
+      b = 1.0
+      c = -a*mid_x-mid_y
+    end
+    
     side = a*x+y+c
     
     if hint == 'Colder'
@@ -29,8 +44,28 @@ def solve str
         a,b,c = -a, -b, -c
       end
     end
-    p [a, b, c]
+    planes << [a, b, c]
+    prev = x, y
+
+    points = Set.new
+    planes.combination(2) do |e1, e2|
+      p = get_intersection(e1, e2)
+      next if p.nil?
+      p = p.map(&:to_f)
+      if planes.all? { |_a, _b, _c| _a*p[0] + _b*p[1] + _c <= 0 }
+        points << p
+      end
+    end
+    p points
+    # find convex hull of the points and calculate area
   end
+end
+
+def get_intersection l1, l2
+  a = Matrix[[l1[0],l1[1]], [l2[0], l2[1]]]
+  return nil if a.det == 0
+  b = Vector[-l1[2], -l2[2]]
+  a.inverse * b
 end
 
 input = 
