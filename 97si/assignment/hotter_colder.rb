@@ -3,6 +3,7 @@
 require 'stringio'
 require 'matrix'
 require 'set'
+require_relative '../convex_hull'
 
 def solve str
   io = StringIO.new str
@@ -56,7 +57,8 @@ def solve str
         points << p
       end
     end
-    p points
+    ch = convex_hull points
+    p area_polygon ch
     # find convex hull of the points and calculate area
   end
 end
