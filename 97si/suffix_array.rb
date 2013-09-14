@@ -16,10 +16,12 @@ def get_suffix_array t
     skip *= 2
     level += 1
   end
-  p[-1]
+  sa = []
+  p[-1].each_with_index do |v, i| sa[v] = i end
+  sa
 end
 
 if __FILE__ == $0
   sa = get_suffix_array "bobocel"
-  p sa
+  p get_suffix_array "alabalaalabala"
 end
